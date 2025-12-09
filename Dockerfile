@@ -13,14 +13,11 @@ RUN npm ci
 
 COPY . .
 
-# Build the client with the socket URL
-RUN echo "SOCKET_URL is: $SOCKET_URL" && npm run build-production && echo "=== Built files ===" && ls -la dist/ && echo "=== Checking bundle for SOCKET_URL ===" && grep -o 'https://tunnelerserver[^"]*' dist/bundle*.js || echo "NOT FOUND IN BUNDLE"
+# Build the client
+RUN npm run build-production
 
 # Production stage - serve static files with nginx
 FROM nginx:alpine
-
-# Cache bust - change this value to force rebuild
-ARG CACHE_BUST=1
 
 # Copy built files to nginx
 COPY --from=builder /app/dist /usr/share/nginx/html

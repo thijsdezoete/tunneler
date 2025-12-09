@@ -1,12 +1,8 @@
 const { io } = require('socket.io-client');
 const equal = require('fast-deep-equal');
 
-console.log('=== TUNNELER BUILD 2025-12-09-A ===');
-alert('New build loaded!');
-
 // Socket URL
 const getSocketUrl = () => {
-  // Hardcoded for production - TODO: fix webpack DefinePlugin
   if (window.location.hostname === 'tunneler.boei.eu') {
     return 'https://tunnelerserver.boei.eu';
   }
