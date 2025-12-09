@@ -1,14 +1,11 @@
 const { io } = require('socket.io-client');
 const equal = require('fast-deep-equal');
 
-// Socket URL - injected at build time by webpack DefinePlugin, or fallback for local dev
+// Socket URL
 const getSocketUrl = () => {
-  // __SOCKET_URL__ is replaced by webpack at build time
-  const buildTimeUrl = __SOCKET_URL__;
-  console.log('Build-time SOCKET_URL:', buildTimeUrl);
-
-  if (buildTimeUrl) {
-    return buildTimeUrl;
+  // Hardcoded for production - TODO: fix webpack DefinePlugin
+  if (window.location.hostname === 'tunneler.boei.eu') {
+    return 'https://tunnelerserver.boei.eu';
   }
 
   // Fallback for local development: same origin with port 3100
