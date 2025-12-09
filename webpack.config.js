@@ -11,8 +11,9 @@ module.exports = {
   entry: './src/index.js',
   target: 'web',
   output: {
-    filename: 'bundle.js',
+    filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
+    clean: true,
     //publicPath: "auto",
   },
   devtool: 'source-map',
