@@ -1,7 +1,7 @@
 const { io } = require('socket.io-client');
 const equal = require('fast-deep-equal');
 
-console.log('=== TUNNELER BUILD 2024-12-09-A ===');
+console.log('=== TUNNELER BUILD 2025-12-09-A ===');
 alert('New build loaded!');
 
 // Socket URL
