@@ -14,7 +14,7 @@ RUN npm ci
 COPY . .
 
 # Build the client with the socket URL
-RUN npm run build-production
+RUN echo "SOCKET_URL is: $SOCKET_URL" && npm run build-production
 
 # Production stage - serve static files with nginx
 FROM nginx:alpine
