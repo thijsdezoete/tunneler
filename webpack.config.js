@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
@@ -28,8 +29,10 @@ module.exports = {
       template: './src/index.html',
     }),
     new MiniCssExtractPlugin(),
-    new webpack.DefinePlugin({
-      '__SOCKET_URL__': JSON.stringify(process.env.SOCKET_URL || ''),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'public/config.js', to: 'config.js' },
+      ],
     }),
   ],
   module: {
