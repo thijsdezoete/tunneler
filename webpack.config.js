@@ -1,9 +1,10 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
 
 module.exports = {
-  mode: 'development',
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   entry: './src/index.js',
   target: 'web',
   output: {
@@ -27,6 +28,9 @@ module.exports = {
       template: './src/index.html',
     }),
     new MiniCssExtractPlugin(),
+    new webpack.DefinePlugin({
+      '__SOCKET_URL__': JSON.stringify(process.env.SOCKET_URL || ''),
+    }),
   ],
   module: {
     rules: [

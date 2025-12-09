@@ -57,6 +57,8 @@ export default class Tank {
     this.serverState = null;
     this.readyToMove = false;
     this.shotNumber = 0;
+    // Digging mechanics: movement slows based on amount of dirt under tank
+    this.diggingCounter = 0;
     // prettier-ignore
     this.tankUp = [
       0,0,0,3,0,0,0,
@@ -132,6 +134,8 @@ export default class Tank {
     this.serverState = null;
     this.shotNumber = 0;
     this.currentTankShape = this.tankUp;
+    this.diggingCounter = 0;
+    this.deathCounted = false; // For deathmatch mode tracking
   }
 
   die() {
@@ -363,17 +367,61 @@ export default class Tank {
     return true;
   }
 
+  // Count how many dirt tiles are under the tank at position (x, y)
+  countDirtTiles(x, y, shape) {
+    let dirtCount = 0;
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.height; j++) {
+        if (shape[j * this.width + i] !== 0) {
+          const underlyingTile = this.gameMap.getTile(x + i, y + j);
+          // Tiles 1 and 2 are ground (dirt/unexplored)
+          if (underlyingTile === 1 || underlyingTile === 2) {
+            dirtCount++;
+          }
+        }
+      }
+    }
+    return dirtCount;
+  }
+
   moveByVector(vector2) {
     if (this.readyToMove) {
-      if (
-        this.isLegalMove(
-          this.x + vector2.x * this.movementSpeed,
-          this.y + vector2.y * this.movementSpeed,
-          this.currentTankShape
-        )
-      ) {
-        this.x += vector2.x * this.movementSpeed;
-        this.y += vector2.y * this.movementSpeed;
+      const newX = this.x + vector2.x * this.movementSpeed;
+      const newY = this.y + vector2.y * this.movementSpeed;
+
+      if (this.isLegalMove(newX, newY, this.currentTankShape)) {
+        // Count dirt tiles at destination - more dirt = more delay
+        const dirtCount = this.countDirtTiles(newX, newY, this.currentTankShape);
+
+        // Speed tiers:
+        // - No dirt (0): full speed, move every frame
+        // - Light dirt (1-10): move 3 out of 4 frames (~75% speed)
+        // - Heavy dirt (11+): move 2 out of 4 frames (~50% speed)
+
+        let skipThisFrame = false;
+        this.diggingCounter++;
+
+        if (dirtCount === 0) {
+          // Clear path - full speed
+          this.diggingCounter = 0;
+        } else if (dirtCount <= 10) {
+          // Partial dirt (shot path) - skip every 4th frame
+          if (this.diggingCounter >= 4) {
+            skipThisFrame = true;
+            this.diggingCounter = 0;
+          }
+        } else {
+          // Full dirt - skip every other frame
+          if (this.diggingCounter >= 2) {
+            skipThisFrame = true;
+            this.diggingCounter = 0;
+          }
+        }
+
+        if (!skipThisFrame) {
+          this.x = newX;
+          this.y = newY;
+        }
       }
     }
   }

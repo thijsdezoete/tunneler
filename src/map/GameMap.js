@@ -49,6 +49,22 @@ export default class GameMap {
     this.activeExplosions = new Map();
     this.bases = [];
 
+    // Fog of war - track explored tiles per team
+    // Only tracks what each team has seen (by their tanks moving nearby)
+    this.exploredByTeam = {
+      0: new Set(), // Blue team explored tiles
+      1: new Set()  // Green team explored tiles
+    };
+
+    // Game options - will be set by Game.js
+    this.friendlyFire = true; // Default to true
+    this.playerTeam = 0;
+    this.teams = { 0: [0], 1: [1] };
+    this.localPlayerNumber = 0; // Will be set by Game.js
+
+    // Track tiles cleared this frame to broadcast to other clients
+    this.clearedTilesThisFrame = [];
+
     this.init();
   }
 
@@ -85,6 +101,12 @@ export default class GameMap {
     return this.tanks.find((tank) => tank.playerNumber === number);
   }
 
+  getTeamForPlayer(playerNumber) {
+    if (this.teams[0].includes(playerNumber)) return 0;
+    if (this.teams[1].includes(playerNumber)) return 1;
+    return 0; // Default
+  }
+
   pushProjectile(projectile) {
     this.activeProjectiles.set(projectile.hash, projectile);
   }
@@ -111,13 +133,55 @@ export default class GameMap {
     return true;
   }
 
-  setTile(x, y, type) {
+  setTile(x, y, type, fromNetwork = false) {
     if (x >= this.width) throw Error(`Trying to set a tile out of bounds (x >= width) x --> ${x}`);
     if (x < 0) throw Error(`Trying to set a tile out of bounds (x < 0) x --> ${x}`);
     if (y >= this.height)
       throw Error(`Trying to set a tile out of bounds (y >= height) y --> ${y}`);
     if (y < 0) throw Error(`Trying to set a tile out of bounds (y < 0) y --> ${y}`);
+
+    const currentTile = this.tiles[y * this.width + x];
     this.tiles[y * this.width + x] = type;
+
+    // Track dirt -> empty clears for network sync (only if not already from network)
+    if (!fromNetwork && (currentTile === 1 || currentTile === 2) && type === 3) {
+      this.clearedTilesThisFrame.push({ x, y });
+    }
+  }
+
+  // Apply tiles cleared from network
+  applyNetworkTileClears(tiles) {
+    tiles.forEach(({ x, y }) => {
+      const currentTile = this.getTile(x, y);
+      // Only clear if it's still dirt (might have already been cleared locally)
+      if (currentTile === 1 || currentTile === 2) {
+        this.setTile(x, y, 3, true); // true = fromNetwork, don't re-broadcast
+      }
+    });
+  }
+
+  // Get and clear the list of tiles cleared this frame
+  getClearedTilesAndReset() {
+    const tiles = this.clearedTilesThisFrame;
+    this.clearedTilesThisFrame = [];
+    return tiles;
+  }
+
+  isExploredByTeam(x, y, team) {
+    return this.exploredByTeam[team].has(`${x},${y}`);
+  }
+
+  // Mark area around position as explored for a specific team
+  markAreaExploredByTeam(centerX, centerY, team, radius = 10) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+        if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+          this.exploredByTeam[team].add(`${x},${y}`);
+        }
+      }
+    }
   }
 
   clearMapBeforeRender() {
@@ -358,6 +422,7 @@ export default class GameMap {
         setTimeout(() => {
           this.activeExplosions.delete(explosion.hash);
         }, 3000);
+        return; // Exit early, projectile is deleted
       }
 
       // this iterates over hypothetical future path of the projectile
@@ -374,7 +439,7 @@ export default class GameMap {
         const projectileOwnerTank = this.getTankByPlayerNumber(projectile.playerNumber);
 
         // active blockers are impenetrables except for the owner tank
-        // with added 1 and 2 (ground)
+        // Ground (1, 2) IS a blocker - bullets explode on dirt and clear a small area
         const activeBlockers = [...projectileOwnerTank.impenetrables, 1, 2];
 
         let explosionLifeSpan = 3;
@@ -382,27 +447,64 @@ export default class GameMap {
 
         // check if the projectile is colliding with anything except the owner tank
         if (activeBlockers.includes(tile)) {
-          // check if the tank on index 0 is the one that was hit
-          // and
-          // check if the projectile was not fired by the same tank
-          // this has to be done because projectile actually starts in part of the tank (barel)
-          // as in the original game
-          if (
-            this.tanks[0].projectileBlockers.includes(tile) 
-            //projectile.playerNumber !== this.tanks[0].playerNumber
-          ) {
-            this.tanks[0].receiveHit();
-            explosionLifeSpan = 7;
-            explosionParticleNumber = 14;
-          } else if (
-            this.tanks[1].projectileBlockers.includes(tile)
-            //projectile.playerNumber !== this.tanks[0].playerNumber
-            ) {
-              // the network tank (on index 1) should not receive hit, it will get network updated
-            //this.tanks[1].receiveHit();
-            explosionLifeSpan = 7;
-            explosionParticleNumber = 14;
+          // Check all tanks for collision
+          // Only the local player's tank (index 0) receives hits locally
+          // Network tanks get their hit state from network updates
+          for (let j = 0; j < this.tanks.length; j++) {
+            const tank = this.tanks[j];
+            if (tank.projectileBlockers.includes(tile)) {
+              // Only apply damage to local player tank (isPlayer=true)
+              // Other tanks receive damage via network sync
+              if (tank.isPlayer) {
+                // Check friendly fire option
+                const projectileOwnerTeam = this.getTeamForPlayer(projectile.playerNumber);
+                const tankTeam = this.getTeamForPlayer(tank.playerNumber);
+
+                // If friendly fire is off and same team, don't damage
+                if (!this.friendlyFire && projectileOwnerTeam === tankTeam) {
+                  // Skip damage but still show explosion
+                } else {
+                  tank.receiveHit();
+                }
+              }
+              explosionLifeSpan = 7;
+              explosionParticleNumber = 14;
+              break;
+            }
           }
+
+          // If bullet hit dirt, clear the impact point plus extra tiles
+          // Only the projectile owner's client does the clearing (authoritative)
+          // Other clients receive the cleared tiles via network sync
+          if (tile === 1 || tile === 2) {
+            const isLocalPlayerProjectile = projectile.playerNumber === this.localPlayerNumber;
+
+            if (isLocalPlayerProjectile) {
+              // Clear the hit tile
+              this.setTile(coords.x, coords.y, 3);
+
+              // Chance to clear 1-2 extra adjacent tiles
+              const extraTiles = Math.floor(Math.random() * 3); // 0, 1, or 2 extra
+              const directions = [
+                { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+                { dx: 1, dy: 1 }, { dx: -1, dy: -1 },
+                { dx: 1, dy: -1 }, { dx: -1, dy: 1 }
+              ];
+
+              for (let e = 0; e < extraTiles; e++) {
+                const dir = directions[Math.floor(Math.random() * directions.length)];
+                const extraX = coords.x + dir.dx;
+                const extraY = coords.y + dir.dy;
+                const extraTile = this.getTile(extraX, extraY);
+                if (extraTile === 1 || extraTile === 2) {
+                  this.setTile(extraX, extraY, 3);
+                }
+              }
+            }
+            // Non-local projectiles: dirt clearing comes from network sync
+          }
+
           const seed = projectile.number;
           this.activeProjectiles.delete(projectile.hash);
           // consider adding a delay to the explosion

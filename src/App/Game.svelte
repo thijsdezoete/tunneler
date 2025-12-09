@@ -7,7 +7,14 @@
   const { connectionHandler } = getContext('connectionHandler');
 
   function startGame() {
-    const game = new Game(gameInitData.seed, gameInitData.players, gameInitData.playerNumber)
+    const game = new Game(
+      gameInitData.seed,
+      gameInitData.players,
+      gameInitData.playerNumber,
+      gameInitData.gameMode || '1v1',
+      gameInitData.teams || { 0: [0], 1: [1] },
+      gameInitData.options || {}
+    );
   }
 
   onMount(async () => {

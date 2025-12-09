@@ -217,14 +217,32 @@ __webpack_require__.r(__webpack_exports__);
 var _require = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/build/cjs/index.js"),
     io = _require.io;
 
-var equal = __webpack_require__(/*! fast-deep-equal */ "./node_modules/fast-deep-equal/index.js");
+var equal = __webpack_require__(/*! fast-deep-equal */ "./node_modules/fast-deep-equal/index.js"); // Determine socket URL - will be replaced at build time by webpack DefinePlugin
+// Falls back to deriving from current origin (replace port with 3100)
+
+
+var getSocketUrl = function getSocketUrl() {
+  // Check if SOCKET_URL was injected at build time
+  if (false) {} // Fallback: derive from current page URL
+
+
+  var origin = window.location.origin; // If on port 80 or 443, append :3100, otherwise replace port
+
+  if (origin.match(/:\d+$/)) {
+    return origin.replace(/:\d+$/, ':3100');
+  }
+
+  return origin + ':3100';
+};
+
+var SOCKET_URL = getSocketUrl();
 
 var ConnectionHandler = /*#__PURE__*/function () {
   function ConnectionHandler() {
     (0,_babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0__["default"])(this, ConnectionHandler);
 
-    //this.socket = io('http://192.168.0.200:3100');
-    this.socket = io('https://tunneler-server.herokuapp.com/');
+    console.log('Connecting to socket server:', SOCKET_URL);
+    this.socket = io(SOCKET_URL);
     this.socket.on('init', function (msg) {
       return console.log(msg);
     });
@@ -236,7 +254,12 @@ var ConnectionHandler = /*#__PURE__*/function () {
   (0,_babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__["default"])(ConnectionHandler, [{
     key: "startNewGame",
     value: function startNewGame() {
-      this.socket.emit('createGame');
+      var gameMode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '1v1';
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      this.socket.emit('createGame', {
+        gameMode: gameMode,
+        options: options
+      });
     }
   }, {
     key: "nextRound",
@@ -276,8 +299,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Game)
 /* harmony export */ });
-/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/defineProperty */ "./node_modules/@babel/runtime/helpers/esm/defineProperty.js");
-/* harmony import */ var _babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ "./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js");
+/* harmony import */ var _babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ "./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js");
+/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/defineProperty */ "./node_modules/@babel/runtime/helpers/esm/defineProperty.js");
 /* harmony import */ var _babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @babel/runtime/helpers/construct */ "./node_modules/@babel/runtime/helpers/esm/construct.js");
 /* harmony import */ var _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ "./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js");
 /* harmony import */ var _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
@@ -303,8 +326,15 @@ __webpack_require__.r(__webpack_exports__);
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0,_babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_0__["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0,_babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
+
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 
 
@@ -323,6 +353,13 @@ var Game = /*#__PURE__*/function () {
   function Game(seed, playersData, activePlayerNumber) {
     var _this = this;
 
+    var gameMode = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '1v1';
+    var teams = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {
+      0: [0],
+      1: [1]
+    };
+    var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+
     (0,_babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_4__["default"])(this, Game);
 
     this.pausedState = {};
@@ -330,12 +367,31 @@ var Game = /*#__PURE__*/function () {
     this.currentRound = 1;
     this.isRoundSwitching = false;
     this.isGameloopSuspended = false;
-    this.maxRounds = 5;
     this.playerNumber = activePlayerNumber;
-    this.enemyNumber = activePlayerNumber === 0 ? 1 : 0;
-    this.playerTankColors = activePlayerNumber === 0 ? blueTankColors : greenTankColors;
-    this.enemyTankColors = activePlayerNumber === 0 ? greenTankColors : blueTankColors;
-    this.overlay = new _Overlay__WEBPACK_IMPORTED_MODULE_16__["default"]('The other player has minimized the game. Please wait till he opens the window again.');
+    this.gameMode = gameMode;
+    this.teams = teams; // Game options with defaults
+
+    this.options = {
+      minimap: options.minimap !== undefined ? options.minimap : true,
+      friendlyFire: options.friendlyFire !== undefined ? options.friendlyFire : true,
+      maxPoints: options.maxPoints || 5,
+      gameType: options.gameType || 'elimination' // elimination, capture, deathmatch
+
+    };
+    this.maxPoints = this.options.maxPoints; // For elimination mode, maxRounds = maxPoints. For other modes, rounds are continuous.
+
+    this.maxRounds = this.options.gameType === 'elimination' ? this.options.maxPoints : 999; // Determine player's team (0 = blue, 1 = green)
+
+    this.playerTeam = playersData[activePlayerNumber].team;
+    this.enemyTeam = this.playerTeam === 0 ? 1 : 0; // Get all teammate and enemy player numbers
+
+    this.teammateNumbers = teams[this.playerTeam].filter(function (n) {
+      return n !== activePlayerNumber;
+    });
+    this.enemyNumbers = teams[this.enemyTeam];
+    this.playerTankColors = this.playerTeam === 0 ? blueTankColors : greenTankColors;
+    this.enemyTankColors = this.playerTeam === 0 ? greenTankColors : blueTankColors;
+    this.overlay = new _Overlay__WEBPACK_IMPORTED_MODULE_16__["default"]('A player has minimized the game. Please wait till they open the window again.');
     this.midRoundOverlay = new _Overlay__WEBPACK_IMPORTED_MODULE_16__["default"]();
     this.finalOverlay = new _Overlay__WEBPACK_IMPORTED_MODULE_16__["default"]();
     this.fps = 18;
@@ -345,29 +401,70 @@ var Game = /*#__PURE__*/function () {
     this.gameMap = new _map_GameMap__WEBPACK_IMPORTED_MODULE_8__["default"](1200, 600, seed);
     this.viewport = new _Viewport__WEBPACK_IMPORTED_MODULE_12__["default"](this.gameMap);
     this.renderer = new _Render__WEBPACK_IMPORTED_MODULE_11__["default"](this.viewport);
-    this.playerScore = 0;
-    this.enemyScore = 0;
-    this.player = (0,_babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__["default"])(_player_Tank__WEBPACK_IMPORTED_MODULE_10__["default"], [true, playersData[activePlayerNumber].x, playersData[activePlayerNumber].y, 3, this.gameMap].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.playerTankColors), [this.playerNumber]));
-    this.enemy = (0,_babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__["default"])(_player_Tank__WEBPACK_IMPORTED_MODULE_10__["default"], [false, playersData[activePlayerNumber === 0 ? 1 : 0].x, playersData[activePlayerNumber === 0 ? 1 : 0].y, 3, this.gameMap].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.enemyTankColors), [this.enemyNumber]));
-    this.players = [this.player, this.enemy];
-    this.bases = [this.player.base, this.enemy.base];
-    this.players.forEach(function (player) {
-      _this.gameMap.addTank(player);
+    this.teamScores = {
+      0: 0,
+      1: 0
+    }; // Team scores
+    // Create the local player tank
 
-      _this.gameMap.addBase(player.base);
+    this.player = (0,_babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__["default"])(_player_Tank__WEBPACK_IMPORTED_MODULE_10__["default"], [true, playersData[activePlayerNumber].x, playersData[activePlayerNumber].y, 3, this.gameMap].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.playerTankColors), [this.playerNumber])); // Create all other tanks (teammates and enemies)
+
+    this.tanks = (0,_babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__["default"])({}, activePlayerNumber, this.player);
+    this.teammates = [];
+    this.enemies = []; // Create teammate tanks (same team, controlled by network)
+
+    this.teammateNumbers.forEach(function (playerNum) {
+      var tank = (0,_babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__["default"])(_player_Tank__WEBPACK_IMPORTED_MODULE_10__["default"], [false, playersData[playerNum].x, playersData[playerNum].y, 3, _this.gameMap].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(_this.playerTankColors), [playerNum]));
+
+      _this.tanks[playerNum] = tank;
+
+      _this.teammates.push(tank);
+    }); // Create enemy tanks
+
+    this.enemyNumbers.forEach(function (playerNum) {
+      var tank = (0,_babel_runtime_helpers_construct__WEBPACK_IMPORTED_MODULE_2__["default"])(_player_Tank__WEBPACK_IMPORTED_MODULE_10__["default"], [false, playersData[playerNum].x, playersData[playerNum].y, 3, _this.gameMap].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(_this.enemyTankColors), [playerNum]));
+
+      _this.tanks[playerNum] = tank;
+
+      _this.enemies.push(tank);
+    }); // Legacy support: keep this.enemy pointing to first enemy for 1v1 compatibility
+
+    this.enemy = this.enemies[0]; // All tanks array for iteration
+
+    this.allTanks = Object.values(this.tanks); // Collect all bases
+
+    this.bases = this.allTanks.map(function (tank) {
+      return tank.base;
+    }); // Add all tanks and bases to the game map
+
+    this.allTanks.forEach(function (tank) {
+      _this.gameMap.addTank(tank);
+
+      _this.gameMap.addBase(tank.base);
     });
     _ConnectionHandler__WEBPACK_IMPORTED_MODULE_15__["default"].socket.on('stateUpdate', function (data) {
-      var enemyData = data[activePlayerNumber === 0 ? 1 : 0];
-      if (!enemyData) return;
-      console.log('enemyServerShield', enemyData.s);
+      // Update all network-controlled tanks (teammates + enemies)
+      Object.keys(data).forEach(function (playerNum) {
+        var num = parseInt(playerNum);
 
-      _this.enemy.updateState(enemyData);
+        if (num !== activePlayerNumber && _this.tanks[num]) {
+          _this.tanks[num].updateState(data[num]);
+        }
+      });
     });
     _ConnectionHandler__WEBPACK_IMPORTED_MODULE_15__["default"].socket.on('pausedUpdate', function (data) {
       if (data) {
         _this.pausedState = data;
       }
-    });
+    }); // Set up minimap with team info
+
+    this.renderer.teammates = this.teammates;
+    this.renderer.playerTeam = this.playerTeam;
+    this.renderer.minimapEnabled = this.options.minimap; // Pass friendly fire option to game map for projectile collision
+
+    this.gameMap.friendlyFire = this.options.friendlyFire;
+    this.gameMap.playerTeam = this.playerTeam;
+    this.gameMap.teams = this.teams;
     this.init();
     this.gameLoop();
   }
@@ -408,25 +505,70 @@ var Game = /*#__PURE__*/function () {
   }, {
     key: "isInBase",
     value: function isInBase(tank) {
-      for (var i = 0; i < this.bases.length; i++) {
-        var base = this.bases[i];
+      var tankTeam = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var team = tankTeam !== null ? tankTeam : this.playerTeam;
+
+      for (var i = 0; i < this.allTanks.length; i++) {
+        var otherTank = this.allTanks[i];
+        var base = otherTank.base;
 
         if (tank.x >= base.x && tank.x < base.x + base.width - tank.width) {
           // assumes that tank is square
           if (tank.y >= base.y && tank.y <= base.y + base.height - tank.width) {
             // assumes that tank is square
-            return i; // 0 for player, 1 for enemy base
+            // Return the team of the base owner (0 = blue team, 1 = green team)
+            var baseOwnerTeam = this.teams[0].includes(otherTank.playerNumber) ? 0 : 1;
+            return {
+              inBase: true,
+              isOwnTeam: baseOwnerTeam === team,
+              baseOwnerTeam: baseOwnerTeam
+            };
           }
         }
       }
 
-      return -1; // -1 for not in base
+      return {
+        inBase: false,
+        isOwnTeam: false,
+        baseOwnerTeam: null
+      };
+    } // Check if any tank on a team is in the enemy's base (for capture mode)
+
+  }, {
+    key: "isTeamCapturingEnemyBase",
+    value: function isTeamCapturingEnemyBase(team) {
+      var teamPlayerNumbers = this.teams[team];
+      var enemyTeam = team === 0 ? 1 : 0;
+
+      var _iterator = _createForOfIteratorHelper(teamPlayerNumbers),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var playerNum = _step.value;
+          var tank = this.tanks[playerNum];
+
+          if (!tank.isDead) {
+            var baseStatus = this.isInBase(tank, team);
+
+            if (baseStatus.inBase && baseStatus.baseOwnerTeam === enemyTeam) {
+              return true;
+            }
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      return false;
     }
   }, {
     key: "endGame",
     value: function () {
-      var _endGame = (0,_babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__["default"])( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().mark(function _callee() {
-        var message;
+      var _endGame = (0,_babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_0__["default"])( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().mark(function _callee() {
+        var myTeamScore, enemyTeamScore, message;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -434,23 +576,25 @@ var Game = /*#__PURE__*/function () {
                 this.isGameloopSuspended = true;
                 this.renderer.setMapMode();
                 this.renderer.render();
-                message = "It's a draw.";
+                myTeamScore = this.teamScores[this.playerTeam];
+                enemyTeamScore = this.teamScores[this.enemyTeam];
+                message = "It's a draw!";
 
-                if (this.playerScore > this.enemyScore) {
-                  message = "You won! Your score: ".concat(this.playerScore, " | Enemy's score: ").concat(this.enemyScore);
-                } else {
-                  message = "You lost! Your score: ".concat(this.playerScore, " | Enemy's score: ").concat(this.enemyScore);
+                if (myTeamScore > enemyTeamScore) {
+                  message = "Your team won! Score: ".concat(myTeamScore, " - ").concat(enemyTeamScore);
+                } else if (myTeamScore < enemyTeamScore) {
+                  message = "Your team lost! Score: ".concat(myTeamScore, " - ").concat(enemyTeamScore);
                 }
 
                 this.finalOverlay.setText(message);
                 this.finalOverlay.show();
-                _context.next = 9;
+                _context.next = 11;
                 return (0,_Helpers__WEBPACK_IMPORTED_MODULE_14__.delay)(5000);
 
-              case 9:
+              case 11:
                 this.finalOverlay.hide();
 
-              case 10:
+              case 12:
               case "end":
                 return _context.stop();
             }
@@ -463,37 +607,56 @@ var Game = /*#__PURE__*/function () {
       }
 
       return endGame;
-    }()
+    }() // Check if any team has reached the winning score
+
+  }, {
+    key: "hasTeamWon",
+    value: function hasTeamWon() {
+      return this.teamScores[0] >= this.maxPoints || this.teamScores[1] >= this.maxPoints;
+    }
   }, {
     key: "endRound",
     value: function () {
-      var _endRound = (0,_babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__["default"])( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().mark(function _callee2() {
+      var _endRound = (0,_babel_runtime_helpers_asyncToGenerator__WEBPACK_IMPORTED_MODULE_0__["default"])( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().mark(function _callee2() {
         var _this3 = this;
 
-        var counter, countdown;
+        var message,
+            gameOver,
+            counter,
+            scoreText,
+            roundMsg,
+            countdown,
+            _args2 = arguments;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_6___default().wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _ConnectionHandler__WEBPACK_IMPORTED_MODULE_15__["default"].nextRound();
-                this.player.reset();
-                this.enemy.reset();
+                message = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : null;
+                _ConnectionHandler__WEBPACK_IMPORTED_MODULE_15__["default"].nextRound(); // Reset all tanks
 
-                if (!(this.currentRound === this.maxRounds)) {
-                  _context2.next = 7;
+                this.allTanks.forEach(function (tank) {
+                  return tank.reset();
+                }); // Check if game is over (in elimination mode, or if a team hit max points)
+
+                gameOver = this.options.gameType === 'elimination' ? this.currentRound === this.maxRounds : this.hasTeamWon();
+
+                if (!gameOver) {
+                  _context2.next = 8;
                   break;
                 }
 
-                _context2.next = 6;
+                _context2.next = 7;
                 return this.endGame();
 
-              case 6:
+              case 7:
                 return _context2.abrupt("return");
 
-              case 7:
+              case 8:
                 this.isGameloopSuspended = true;
                 counter = 3;
-                this.midRoundOverlay.setText("Round ".concat(this.currentRound, " over! Next round in ").concat(counter, " seconds..."));
+                scoreText = "Blue: ".concat(this.teamScores[0], " - Green: ").concat(this.teamScores[1]);
+                roundMsg = message || "Round ".concat(this.currentRound, " over!");
+                this.midRoundOverlay.setText("".concat(roundMsg, " ").concat(scoreText, "\nNext round in ").concat(counter, " seconds..."));
                 this.midRoundOverlay.show();
 
                 countdown = function countdown() {
@@ -501,7 +664,7 @@ var Game = /*#__PURE__*/function () {
                     var interval = setInterval(function () {
                       counter -= 1;
 
-                      _this3.midRoundOverlay.setText("Round ".concat(_this3.currentRound, " over! Next round in ").concat(counter, " seconds..."));
+                      _this3.midRoundOverlay.setText("".concat(roundMsg, " ").concat(scoreText, "\nNext round in ").concat(counter, " seconds..."));
 
                       if (counter === 0) {
                         resolve();
@@ -511,16 +674,16 @@ var Game = /*#__PURE__*/function () {
                   });
                 };
 
-                _context2.next = 14;
+                _context2.next = 17;
                 return countdown();
 
-              case 14:
+              case 17:
                 this.midRoundOverlay.hide();
                 this.currentRound++;
                 this.isRoundSwitching = false;
                 this.isGameloopSuspended = false;
 
-              case 18:
+              case 21:
               case "end":
                 return _context2.stop();
             }
@@ -533,11 +696,131 @@ var Game = /*#__PURE__*/function () {
       }
 
       return endRound;
-    }()
+    }() // Check if an entire team is eliminated
+
+  }, {
+    key: "isTeamEliminated",
+    value: function isTeamEliminated(teamNumber) {
+      var _this4 = this;
+
+      var teamPlayerNumbers = this.teams[teamNumber];
+      return teamPlayerNumbers.every(function (playerNum) {
+        return _this4.tanks[playerNum].isDead;
+      });
+    }
+  }, {
+    key: "isAnyTeamEliminated",
+    value: function isAnyTeamEliminated() {
+      return this.isTeamEliminated(0) || this.isTeamEliminated(1);
+    } // Legacy compatibility for 1v1
+
   }, {
     key: "isAnyTankDead",
     value: function isAnyTankDead() {
-      return this.player.isDead || this.enemy.isDead;
+      return this.isAnyTeamEliminated();
+    }
+  }, {
+    key: "checkWinConditions",
+    value: function checkWinConditions(playerBaseStatus) {
+      var _this5 = this;
+
+      if (this.isRoundSwitching) return;
+      var gameType = this.options.gameType;
+
+      if (gameType === 'elimination') {
+        // Original behavior: team elimination wins the round
+        if (this.isAnyTeamEliminated()) {
+          this.isRoundSwitching = true;
+
+          if (this.isTeamEliminated(0)) {
+            this.teamScores[1] += 1;
+            console.log('Team Green (1) wins the round!');
+          }
+
+          if (this.isTeamEliminated(1)) {
+            this.teamScores[0] += 1;
+            console.log('Team Blue (0) wins the round!');
+          }
+
+          console.log('Team scores:', this.teamScores);
+          setTimeout(function () {
+            _this5.endRound();
+          }, 1500);
+        }
+      } else if (gameType === 'capture') {
+        // Capture the flag: score when entering enemy base
+        // Only the local player can trigger a capture (each client checks its own player)
+        if (playerBaseStatus.inBase && !playerBaseStatus.isOwnTeam && !this.player.isDead) {
+          // Player just captured enemy base!
+          this.isRoundSwitching = true;
+          this.teamScores[this.playerTeam] += 1;
+          console.log("Team ".concat(this.playerTeam, " captured the flag!"));
+          var teamName = this.playerTeam === 0 ? 'Blue' : 'Green';
+          setTimeout(function () {
+            _this5.endRound("".concat(teamName, " captured the flag!"));
+          }, 1000);
+        } // Also check for team elimination (still ends round in capture mode)
+
+
+        if (this.isAnyTeamEliminated()) {
+          this.isRoundSwitching = true;
+
+          if (this.isTeamEliminated(0)) {
+            this.teamScores[1] += 1;
+            console.log('Team Green (1) eliminated Blue!');
+          }
+
+          if (this.isTeamEliminated(1)) {
+            this.teamScores[0] += 1;
+            console.log('Team Blue (0) eliminated Green!');
+          }
+
+          setTimeout(function () {
+            _this5.endRound('Team eliminated!');
+          }, 1500);
+        }
+      } else if (gameType === 'deathmatch') {
+        // Deathmatch: score when killing enemy, but don't end round
+        // Individual kills are tracked - round resets when all of one team is dead
+        // The kill scoring happens in Tank.receiveHit -> we need to emit kills to server
+        // Check if any enemy died this frame (we track via wasDead flag)
+        this.enemies.forEach(function (enemy) {
+          if (enemy.isDead && !enemy.deathCounted) {
+            enemy.deathCounted = true; // Award point to our team (enemy died)
+
+            _this5.teamScores[_this5.playerTeam] += 1;
+            console.log("Kill! Team ".concat(_this5.playerTeam, " scores. Total: ").concat(_this5.teamScores[_this5.playerTeam])); // Check if game is won
+
+            if (_this5.hasTeamWon()) {
+              _this5.isRoundSwitching = true;
+              setTimeout(function () {
+                _this5.endRound();
+              }, 1000);
+            }
+          }
+        }); // Check if our player died
+
+        if (this.player.isDead && !this.player.deathCounted) {
+          this.player.deathCounted = true;
+          this.teamScores[this.enemyTeam] += 1;
+          console.log("Death! Team ".concat(this.enemyTeam, " scores. Total: ").concat(this.teamScores[this.enemyTeam]));
+
+          if (this.hasTeamWon()) {
+            this.isRoundSwitching = true;
+            setTimeout(function () {
+              _this5.endRound();
+            }, 1000);
+          }
+        } // Reset round if all of one team is dead (respawn everyone)
+
+
+        if (this.isAnyTeamEliminated() && !this.hasTeamWon()) {
+          this.isRoundSwitching = true;
+          setTimeout(function () {
+            _this5.endRound('Respawning...');
+          }, 1500);
+        }
+      }
     }
   }, {
     key: "shouldShowStatic",
@@ -554,17 +837,9 @@ var Game = /*#__PURE__*/function () {
   }, {
     key: "gameLoop",
     value: function gameLoop() {
-      var _this4 = this;
+      var _this6 = this;
 
-      window.requestAnimationFrame(this.gameLoop.bind(this));
-      this.paused = this.isAnyPaused();
-
-      if (this.paused) {
-        this.overlay.show();
-        return;
-      } else {
-        this.overlay.hide();
-      }
+      window.requestAnimationFrame(this.gameLoop.bind(this)); // Game no longer pauses for AFK players - tough luck!
 
       var now = Date.now();
       var elapsed = now - this.prevFrameTime; // --------------------------------
@@ -572,68 +847,61 @@ var Game = /*#__PURE__*/function () {
       if (elapsed > this.fpsInterval) {
         // fps limited gameloop starts here
         if (this.isGameloopSuspended) {
-          this.enemy.update(); // we need fresh network state
-
+          // We need fresh network state for all network tanks
+          [].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.teammates), (0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.enemies)).forEach(function (tank) {
+            return tank.update();
+          });
           return;
         }
 
         ;
         this.prevFrameTime = now - elapsed % this.fpsInterval;
-        var baseIndex = this.isInBase(this.player);
-
-        if (baseIndex >= 0) {
-          this.player.isInAnyBase = true;
-        } else {
-          this.player.isInAnyBase = false;
-        } //
+        var baseStatus = this.isInBase(this.player);
+        this.player.isInAnyBase = baseStatus.inBase; //
         // recharging energy and shield
         //
 
-
-        if (baseIndex === 0) {
-          // player in home base
-          this.player.receiveEnergy(0.7);
-          this.player.receiveShield(0.35);
-        } else if (baseIndex === 1) {
-          this.player.receiveEnergy(0.27); // player in enemy base
+        if (baseStatus.inBase) {
+          if (baseStatus.isOwnTeam) {
+            // Player in friendly base (own team) - full recharge
+            this.player.receiveEnergy(0.7);
+            this.player.receiveShield(0.35);
+          } else {
+            // Player in enemy base - only partial energy recharge
+            this.player.receiveEnergy(0.27);
+          }
         } //
-        // handling dead tanks
+        // Handle win conditions based on game type
         //
 
 
-        if (this.isAnyTankDead()) {
-          if (this.isRoundSwitching === false) {
-            console.log('some tank is dead, round switching is false');
-            console.log('is player dead', this.player.isDead);
-            console.log('is enemy dead', this.enemy.isDead);
-            this.isRoundSwitching = true;
-
-            if (this.player.isDead) {
-              this.enemyScore += 1;
-            }
-
-            if (this.enemy.isDead) {
-              this.playerScore += 1;
-            }
-
-            console.log('scores', this.enemyScore, this.playerScore);
-            setTimeout(function () {
-              console.log('timeout set');
-
-              _this4.endRound();
-            }, 1500);
-          }
-        }
+        this.checkWinConditions(baseStatus); // Update local player
 
         this.player.update();
         this.shouldShowStatic();
         _ConnectionHandler__WEBPACK_IMPORTED_MODULE_15__["default"].updateGameState(_objectSpread({
           pN: this.playerNumber
-        }, this.player.getState()));
-        this.enemy.update();
+        }, this.player.getState())); // Mark area around player as explored for fog-of-war (for player's team only)
+
+        this.gameMap.markAreaExploredByTeam(this.player.x + 3, this.player.y + 3, this.playerTeam, 12); // Update all network tanks (teammates and enemies)
+
+        [].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.teammates), (0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_3__["default"])(this.enemies)).forEach(function (tank) {
+          return tank.update();
+        }); // Mark areas around teammates as explored too (same team)
+
+        this.teammates.forEach(function (tank) {
+          if (!tank.isDead) {
+            _this6.gameMap.markAreaExploredByTeam(tank.x + 3, tank.y + 3, _this6.playerTeam, 12);
+          }
+        });
         this.gameMap.update();
         this.viewport.update(this.player.x - this.viewport.width / 2, this.player.y - this.viewport.height / 2);
         this.renderer.render();
+
+        if (this.options.minimap) {
+          this.renderer.renderMinimap(this.player.x, this.player.y);
+        }
+
         this.statsDisplay.update(this.player.energy, this.player.shield);
       }
     }
@@ -964,9 +1232,37 @@ var Render = /*#__PURE__*/function () {
     this.isMapRendered = false;
     this.resetRatios();
     this.init();
+    this.initMinimap(); // Teammates for minimap display (set by Game.js)
+
+    this.teammates = [];
+    this.playerTeam = 0;
   }
 
   (0,_babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__["default"])(Render, [{
+    key: "initMinimap",
+    value: function initMinimap() {
+      // Create minimap canvas
+      this.minimapCanvas = document.createElement('canvas');
+      this.minimapCanvas.id = 'minimap'; // Minimap size: scaled down version of map (1200x600 -> 150x75)
+
+      this.minimapScale = 8;
+      this.minimapCanvas.width = Math.floor(this.viewport.gameMap.width / this.minimapScale);
+      this.minimapCanvas.height = Math.floor(this.viewport.gameMap.height / this.minimapScale);
+      this.minimapCanvas.style.position = 'fixed';
+      this.minimapCanvas.style.bottom = '10px';
+      this.minimapCanvas.style.right = '10px';
+      this.minimapCanvas.style.border = '2px solid #444';
+      this.minimapCanvas.style.imageRendering = 'pixelated';
+      this.minimapCanvas.style.backgroundColor = 'black'; // Scale up for visibility
+
+      this.minimapCanvas.style.width = "".concat(this.minimapCanvas.width * 2, "px");
+      this.minimapCanvas.style.height = "".concat(this.minimapCanvas.height * 2, "px");
+      document.body.appendChild(this.minimapCanvas);
+      this.minimapCtx = this.minimapCanvas.getContext('2d');
+      this.minimapImageData = this.minimapCtx.getImageData(0, 0, this.minimapCanvas.width, this.minimapCanvas.height);
+      this.minimapPixels = this.minimapImageData.data;
+    }
+  }, {
     key: "setMapMode",
     value: function setMapMode() {
       // fit window size but keep aspect ratio
@@ -1107,6 +1403,148 @@ var Render = /*#__PURE__*/function () {
     value: function flushPixels() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.putImageData(this.imageData, 0, 0);
+    }
+  }, {
+    key: "renderMinimap",
+    value: function renderMinimap(playerX, playerY) {
+      var _this2 = this;
+
+      if (this.showMap) {
+        // Hide minimap when showing full map
+        this.minimapCanvas.style.display = 'none';
+        return;
+      }
+
+      this.minimapCanvas.style.display = 'block';
+      var scale = this.minimapScale;
+      var mapWidth = this.minimapCanvas.width;
+      var mapHeight = this.minimapCanvas.height;
+      var gameMap = this.viewport.gameMap; // Fog of war color (dark gray - unexplored)
+
+      var fogColor = {
+        r: 30,
+        g: 30,
+        b: 30
+      }; // Determine which tile codes belong to player's team
+
+      var friendlyBaseTile = this.playerTeam === 0 ? 12 : 13;
+      var enemyBaseTile = this.playerTeam === 0 ? 13 : 12;
+
+      for (var y = 0; y < mapHeight; y++) {
+        for (var x = 0; x < mapWidth; x++) {
+          var offset = (y * mapWidth + x) * 4;
+          var mapX = x * scale;
+          var mapY = y * scale; // Check if this area has been explored by player's team
+
+          var isExplored = gameMap.isExploredByTeam(mapX, mapY, this.playerTeam);
+          var color = void 0;
+
+          if (!isExplored) {
+            // Fog of war - unexplored area
+            color = fogColor;
+          } else {
+            var tile = gameMap.getTile(mapX, mapY); // Use simplified colors for minimap
+
+            if (tile === 0) {
+              color = {
+                r: 100,
+                g: 100,
+                b: 100
+              }; // stone - gray
+            } else if (tile === 1 || tile === 2) {
+              color = {
+                r: 80,
+                g: 50,
+                b: 20
+              }; // ground - dark brown
+            } else if (tile === 3) {
+              color = {
+                r: 0,
+                g: 0,
+                b: 0
+              }; // empty/cleared - black
+            } else if (tile === friendlyBaseTile) {
+              color = this.playerTeam === 0 ? {
+                r: 0,
+                g: 100,
+                b: 255
+              } // blue base
+              : {
+                r: 0,
+                g: 255,
+                b: 100
+              }; // green base
+            } else if (tile === enemyBaseTile) {
+              color = this.playerTeam === 0 ? {
+                r: 0,
+                g: 100,
+                b: 0
+              } // enemy green base (dimmed)
+              : {
+                r: 0,
+                g: 0,
+                b: 100
+              }; // enemy blue base (dimmed)
+            } else {
+              color = {
+                r: 0,
+                g: 0,
+                b: 0
+              };
+            }
+          }
+
+          this.minimapPixels[offset] = color.r;
+          this.minimapPixels[offset + 1] = color.g;
+          this.minimapPixels[offset + 2] = color.b;
+          this.minimapPixels[offset + 3] = 255;
+        }
+      } // Draw player position indicator (white dot)
+
+
+      var playerMinimapX = Math.floor(playerX / scale);
+      var playerMinimapY = Math.floor(playerY / scale); // Draw a 3x3 white square for player
+
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          var px = playerMinimapX + dx;
+          var py = playerMinimapY + dy;
+
+          if (px >= 0 && px < mapWidth && py >= 0 && py < mapHeight) {
+            var _offset3 = (py * mapWidth + px) * 4;
+
+            this.minimapPixels[_offset3] = 255;
+            this.minimapPixels[_offset3 + 1] = 255;
+            this.minimapPixels[_offset3 + 2] = 255;
+            this.minimapPixels[_offset3 + 3] = 255;
+          }
+        }
+      } // Draw teammate positions (yellow dots)
+
+
+      this.teammates.forEach(function (teammate) {
+        if (teammate.isDead) return;
+        var tmX = Math.floor(teammate.x / scale);
+        var tmY = Math.floor(teammate.y / scale);
+
+        for (var _dy = -1; _dy <= 1; _dy++) {
+          for (var _dx = -1; _dx <= 1; _dx++) {
+            var _px = tmX + _dx;
+
+            var _py = tmY + _dy;
+
+            if (_px >= 0 && _px < mapWidth && _py >= 0 && _py < mapHeight) {
+              var _offset4 = (_py * mapWidth + _px) * 4;
+
+              _this2.minimapPixels[_offset4] = 255;
+              _this2.minimapPixels[_offset4 + 1] = 255;
+              _this2.minimapPixels[_offset4 + 2] = 0;
+              _this2.minimapPixels[_offset4 + 3] = 255;
+            }
+          }
+        }
+      });
+      this.minimapCtx.putImageData(this.minimapImageData, 0, 0);
     }
   }]);
 
@@ -1380,7 +1818,23 @@ var GameMap = /*#__PURE__*/function () {
     this.networkTanks = [];
     this.activeProjectiles = new Map();
     this.activeExplosions = new Map();
-    this.bases = [];
+    this.bases = []; // Fog of war - track explored tiles per team
+    // Only tracks what each team has seen (by their tanks moving nearby)
+
+    this.exploredByTeam = {
+      0: new Set(),
+      // Blue team explored tiles
+      1: new Set() // Green team explored tiles
+
+    }; // Game options - will be set by Game.js
+
+    this.friendlyFire = true; // Default to true
+
+    this.playerTeam = 0;
+    this.teams = {
+      0: [0],
+      1: [1]
+    };
     this.init();
   }
 
@@ -1426,6 +1880,13 @@ var GameMap = /*#__PURE__*/function () {
       });
     }
   }, {
+    key: "getTeamForPlayer",
+    value: function getTeamForPlayer(playerNumber) {
+      if (this.teams[0].includes(playerNumber)) return 0;
+      if (this.teams[1].includes(playerNumber)) return 1;
+      return 0; // Default
+    }
+  }, {
     key: "pushProjectile",
     value: function pushProjectile(projectile) {
       this.activeProjectiles.set(projectile.hash, projectile);
@@ -1465,6 +1926,28 @@ var GameMap = /*#__PURE__*/function () {
       if (y >= this.height) throw Error("Trying to set a tile out of bounds (y >= height) y --> ".concat(y));
       if (y < 0) throw Error("Trying to set a tile out of bounds (y < 0) y --> ".concat(y));
       this.tiles[y * this.width + x] = type;
+    }
+  }, {
+    key: "isExploredByTeam",
+    value: function isExploredByTeam(x, y, team) {
+      return this.exploredByTeam[team].has("".concat(x, ",").concat(y));
+    } // Mark area around position as explored for a specific team
+
+  }, {
+    key: "markAreaExploredByTeam",
+    value: function markAreaExploredByTeam(centerX, centerY, team) {
+      var radius = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 10;
+
+      for (var dx = -radius; dx <= radius; dx++) {
+        for (var dy = -radius; dy <= radius; dy++) {
+          var x = centerX + dx;
+          var y = centerY + dy;
+
+          if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+            this.exploredByTeam[team].add("".concat(x, ",").concat(y));
+          }
+        }
+      }
     }
   }, {
     key: "clearMapBeforeRender",
@@ -1722,6 +2205,7 @@ var GameMap = /*#__PURE__*/function () {
           setTimeout(function () {
             _this6.activeExplosions["delete"](explosion.hash);
           }, 3000);
+          return; // Exit early, projectile is deleted
         } // this iterates over hypothetical future path of the projectile
         // done to handle sub single frame/gameupdate collisions
 
@@ -1737,7 +2221,7 @@ var GameMap = /*#__PURE__*/function () {
           var tile = _this6.getTile(coords.x, coords.y);
 
           var projectileOwnerTank = _this6.getTankByPlayerNumber(projectile.playerNumber); // active blockers are impenetrables except for the owner tank
-          // with added 1 and 2 (ground)
+          // Ground (1, 2) IS a blocker - bullets explode on dirt and clear a small area
 
 
           var activeBlockers = [].concat((0,_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0__["default"])(projectileOwnerTank.impenetrables), [1, 2]);
@@ -1746,23 +2230,79 @@ var GameMap = /*#__PURE__*/function () {
 
           if (activeBlockers.includes(tile)) {
             var _ret = function () {
-              // check if the tank on index 0 is the one that was hit
-              // and
-              // check if the projectile was not fired by the same tank
-              // this has to be done because projectile actually starts in part of the tank (barel)
-              // as in the original game
-              if (_this6.tanks[0].projectileBlockers.includes(tile) //projectile.playerNumber !== this.tanks[0].playerNumber
-              ) {
-                _this6.tanks[0].receiveHit();
+              // Check all tanks for collision
+              // Only the local player's tank (index 0) receives hits locally
+              // Network tanks get their hit state from network updates
+              for (var j = 0; j < _this6.tanks.length; j++) {
+                var tank = _this6.tanks[j];
 
-                explosionLifeSpan = 7;
-                explosionParticleNumber = 14;
-              } else if (_this6.tanks[1].projectileBlockers.includes(tile) //projectile.playerNumber !== this.tanks[0].playerNumber
-              ) {
-                // the network tank (on index 1) should not receive hit, it will get network updated
-                //this.tanks[1].receiveHit();
-                explosionLifeSpan = 7;
-                explosionParticleNumber = 14;
+                if (tank.projectileBlockers.includes(tile)) {
+                  // Only apply damage to local player tank (isPlayer=true)
+                  // Other tanks receive damage via network sync
+                  if (tank.isPlayer) {
+                    // Check friendly fire option
+                    var projectileOwnerTeam = _this6.getTeamForPlayer(projectile.playerNumber);
+
+                    var tankTeam = _this6.getTeamForPlayer(tank.playerNumber); // If friendly fire is off and same team, don't damage
+
+
+                    if (!_this6.friendlyFire && projectileOwnerTeam === tankTeam) {// Skip damage but still show explosion
+                    } else {
+                      tank.receiveHit();
+                    }
+                  }
+
+                  explosionLifeSpan = 7;
+                  explosionParticleNumber = 14;
+                  break;
+                }
+              } // If bullet hit dirt, clear the impact point plus random extra tiles
+
+
+              if (tile === 1 || tile === 2) {
+                // Clear the hit tile
+                _this6.setTile(coords.x, coords.y, 3); // Chance to clear 1-2 extra adjacent tiles
+
+
+                var extraTiles = Math.floor(Math.random() * 3); // 0, 1, or 2 extra
+
+                var directions = [{
+                  dx: 1,
+                  dy: 0
+                }, {
+                  dx: -1,
+                  dy: 0
+                }, {
+                  dx: 0,
+                  dy: 1
+                }, {
+                  dx: 0,
+                  dy: -1
+                }, {
+                  dx: 1,
+                  dy: 1
+                }, {
+                  dx: -1,
+                  dy: -1
+                }, {
+                  dx: 1,
+                  dy: -1
+                }, {
+                  dx: -1,
+                  dy: 1
+                }];
+
+                for (var e = 0; e < extraTiles; e++) {
+                  var dir = directions[Math.floor(Math.random() * directions.length)];
+                  var extraX = coords.x + dir.dx;
+                  var extraY = coords.y + dir.dy;
+
+                  var extraTile = _this6.getTile(extraX, extraY);
+
+                  if (extraTile === 1 || extraTile === 2) {
+                    _this6.setTile(extraX, extraY, 3);
+                  }
+                }
               }
 
               var seed = projectile.number;
@@ -2190,7 +2730,9 @@ var Tank = /*#__PURE__*/function () {
 
     this.serverState = null;
     this.readyToMove = false;
-    this.shotNumber = 0; // prettier-ignore
+    this.shotNumber = 0; // Digging mechanics: movement slows based on amount of dirt under tank
+
+    this.diggingCounter = 0; // prettier-ignore
 
     this.tankUp = [0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 3, 0, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 2, 2, 1, 0, 0, 1, 2, 2, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0].map(function (x) {
       if (x === 1) {
@@ -2256,6 +2798,8 @@ var Tank = /*#__PURE__*/function () {
       this.serverState = null;
       this.shotNumber = 0;
       this.currentTankShape = this.tankUp;
+      this.diggingCounter = 0;
+      this.deathCounted = false; // For deathmatch mode tracking
     }
   }, {
     key: "die",
@@ -2579,14 +3123,65 @@ var Tank = /*#__PURE__*/function () {
       }
 
       return true;
+    } // Count how many dirt tiles are under the tank at position (x, y)
+
+  }, {
+    key: "countDirtTiles",
+    value: function countDirtTiles(x, y, shape) {
+      var dirtCount = 0;
+
+      for (var i = 0; i < this.width; i++) {
+        for (var j = 0; j < this.height; j++) {
+          if (shape[j * this.width + i] !== 0) {
+            var underlyingTile = this.gameMap.getTile(x + i, y + j); // Tiles 1 and 2 are ground (dirt/unexplored)
+
+            if (underlyingTile === 1 || underlyingTile === 2) {
+              dirtCount++;
+            }
+          }
+        }
+      }
+
+      return dirtCount;
     }
   }, {
     key: "moveByVector",
     value: function moveByVector(vector2) {
       if (this.readyToMove) {
-        if (this.isLegalMove(this.x + vector2.x * this.movementSpeed, this.y + vector2.y * this.movementSpeed, this.currentTankShape)) {
-          this.x += vector2.x * this.movementSpeed;
-          this.y += vector2.y * this.movementSpeed;
+        var newX = this.x + vector2.x * this.movementSpeed;
+        var newY = this.y + vector2.y * this.movementSpeed;
+
+        if (this.isLegalMove(newX, newY, this.currentTankShape)) {
+          // Count dirt tiles at destination - more dirt = more delay
+          var dirtCount = this.countDirtTiles(newX, newY, this.currentTankShape); // Speed tiers:
+          // - No dirt (0): full speed, move every frame
+          // - Light dirt (1-10): move 3 out of 4 frames (~75% speed)
+          // - Heavy dirt (11+): move 2 out of 4 frames (~50% speed)
+
+          var skipThisFrame = false;
+          this.diggingCounter++;
+
+          if (dirtCount === 0) {
+            // Clear path - full speed
+            this.diggingCounter = 0;
+          } else if (dirtCount <= 10) {
+            // Partial dirt (shot path) - skip every 4th frame
+            if (this.diggingCounter >= 4) {
+              skipThisFrame = true;
+              this.diggingCounter = 0;
+            }
+          } else {
+            // Full dirt - skip every other frame
+            if (this.diggingCounter >= 2) {
+              skipThisFrame = true;
+              this.diggingCounter = 0;
+            }
+          }
+
+          if (!skipThisFrame) {
+            this.x = newX;
+            this.y = newY;
+          }
         }
       }
     }
@@ -7142,7 +7737,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! svelte/internal */ "./node_modules/svelte/internal/index.mjs");
 /* harmony import */ var _ConnectionHandler__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ConnectionHandler */ "./src/ConnectionHandler.js");
 /* harmony import */ var _JoinOrCreate_svelte__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./JoinOrCreate.svelte */ "./src/App/JoinOrCreate.svelte");
-/* harmony import */ var _CreateNewGame_svelte__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./CreateNewGame.svelte */ "./src/App/CreateNewGame.svelte");
+/* harmony import */ var _Lobby_svelte__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Lobby.svelte */ "./src/App/Lobby.svelte");
 /* harmony import */ var _Game_svelte__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Game.svelte */ "./src/App/Game.svelte");
 /* harmony import */ var svelte__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! svelte */ "./node_modules/svelte/index.mjs");
 /* src/App/App.svelte generated by Svelte v3.44.2 */
@@ -7158,7 +7753,7 @@ function add_css(target) {
 	(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append_styles)(target, "svelte-19xeq24", "button{font-size:1.5rem;padding:0.5rem 1rem;border:none;cursor:pointer}p{font-size:20px}h1{font-size:3rem;margin:0.5rem 0}h2{font-size:1.5rem;margin:0.5rem 0}");
 }
 
-// (34:29) 
+// (50:29) 
 function create_if_block_2(ctx) {
 	let game;
 	let current;
@@ -7195,46 +7790,56 @@ function create_if_block_2(ctx) {
 	};
 }
 
-// (32:31) 
+// (44:30) 
 function create_if_block_1(ctx) {
-	let getgamecode;
+	let lobby;
 	let current;
 
-	getgamecode = new _CreateNewGame_svelte__WEBPACK_IMPORTED_MODULE_3__["default"]({
-			props: { changeRoute: /*changeRoute*/ ctx[2] }
+	lobby = new _Lobby_svelte__WEBPACK_IMPORTED_MODULE_3__["default"]({
+			props: {
+				playerNumber: /*playerInfo*/ ctx[1].playerNumber,
+				username: /*playerInfo*/ ctx[1].username,
+				isHost: /*playerInfo*/ ctx[1].isHost
+			}
 		});
 
 	return {
 		c() {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(getgamecode.$$.fragment);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(lobby.$$.fragment);
 		},
 		m(target, anchor) {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(getgamecode, target, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(lobby, target, anchor);
 			current = true;
 		},
-		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		p(ctx, dirty) {
+			const lobby_changes = {};
+			if (dirty & /*playerInfo*/ 2) lobby_changes.playerNumber = /*playerInfo*/ ctx[1].playerNumber;
+			if (dirty & /*playerInfo*/ 2) lobby_changes.username = /*playerInfo*/ ctx[1].username;
+			if (dirty & /*playerInfo*/ 2) lobby_changes.isHost = /*playerInfo*/ ctx[1].isHost;
+			lobby.$set(lobby_changes);
+		},
 		i(local) {
 			if (current) return;
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(getgamecode.$$.fragment, local);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(lobby.$$.fragment, local);
 			current = true;
 		},
 		o(local) {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(getgamecode.$$.fragment, local);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(lobby.$$.fragment, local);
 			current = false;
 		},
 		d(detaching) {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_component)(getgamecode, detaching);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_component)(lobby, detaching);
 		}
 	};
 }
 
-// (30:2) {#if route === 'home'}
+// (42:2) {#if route === 'home'}
 function create_if_block(ctx) {
 	let choosetype;
 	let current;
 
 	choosetype = new _JoinOrCreate_svelte__WEBPACK_IMPORTED_MODULE_2__["default"]({
-			props: { changeRoute: /*changeRoute*/ ctx[2] }
+			props: { changeRoute: /*changeRoute*/ ctx[3] }
 		});
 
 	return {
@@ -7272,9 +7877,9 @@ function create_fragment(ctx) {
 	const if_blocks = [];
 
 	function select_block_type(ctx, dirty) {
-		if (/*route*/ ctx[1] === 'home') return 0;
-		if (/*route*/ ctx[1] === 'create') return 1;
-		if (/*route*/ ctx[1] === 'game') return 2;
+		if (/*route*/ ctx[2] === 'home') return 0;
+		if (/*route*/ ctx[2] === 'lobby') return 1;
+		if (/*route*/ ctx[2] === 'game') return 2;
 		return -1;
 	}
 
@@ -7359,18 +7964,31 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let gameInitData = {};
-	_ConnectionHandler__WEBPACK_IMPORTED_MODULE_1__["default"].socket.on('joined', ({ playerNumber }) => $$invalidate(0, gameInitData.playerNumber = playerNumber, gameInitData));
+
+	let playerInfo = {
+		playerNumber: null,
+		username: '',
+		isHost: false
+	};
+
+	_ConnectionHandler__WEBPACK_IMPORTED_MODULE_1__["default"].socket.on('joined', ({ playerNumber, team, username, isHost }) => {
+		$$invalidate(1, playerInfo.playerNumber = playerNumber, playerInfo);
+		$$invalidate(1, playerInfo.username = username, playerInfo);
+		$$invalidate(1, playerInfo.isHost = isHost, playerInfo);
+		$$invalidate(0, gameInitData.playerNumber = playerNumber, gameInitData);
+		$$invalidate(0, gameInitData.team = team, gameInitData);
+	});
 
 	_ConnectionHandler__WEBPACK_IMPORTED_MODULE_1__["default"].socket.on('gameInitialization', data => {
 		$$invalidate(0, gameInitData = { ...gameInitData, ...data });
-		console.log(gameInitData);
-		$$invalidate(1, route = 'game');
+		console.log('Game initialized:', gameInitData);
+		$$invalidate(2, route = 'game');
 	});
 
 	(0,svelte__WEBPACK_IMPORTED_MODULE_5__.setContext)('connectionHandler', { connectionHandler: _ConnectionHandler__WEBPACK_IMPORTED_MODULE_1__["default"] });
 	let route = 'home';
-	const changeRoute = value => $$invalidate(1, route = value);
-	return [gameInitData, route, changeRoute];
+	const changeRoute = value => $$invalidate(2, route = value);
+	return [gameInitData, playerInfo, route, changeRoute];
 }
 
 class App extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
@@ -7381,136 +7999,6 @@ class App extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (App);
-
-/***/ }),
-
-/***/ "./src/App/CreateNewGame.svelte":
-/*!**************************************!*\
-  !*** ./src/App/CreateNewGame.svelte ***!
-  \**************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! svelte/internal */ "./node_modules/svelte/internal/index.mjs");
-/* harmony import */ var svelte__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! svelte */ "./node_modules/svelte/index.mjs");
-/* src/App/CreateNewGame.svelte generated by Svelte v3.44.2 */
-
-
-
-
-function add_css(target) {
-	(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append_styles)(target, "svelte-irr1pp", "#create-new-game.svelte-irr1pp{display:flex;flex-direction:column;align-items:center;gap:1rem}#code.svelte-irr1pp{width:210px;height:80px;text-align:center;font-size:2rem;padding:1rem 2rem;background-color:#00000088}button.svelte-irr1pp{font-size:1.5rem;padding:0.5rem 1rem;border:none;cursor:pointer}");
-}
-
-function create_fragment(ctx) {
-	let div;
-	let h1;
-	let t1;
-	let h2;
-	let t3;
-	let p0;
-	let t4;
-	let t5;
-	let p1;
-	let t7;
-	let button;
-	let mounted;
-	let dispose;
-
-	return {
-		c() {
-			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
-			h1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h1");
-			h1.textContent = "Game ready!";
-			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			h2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h2");
-			h2.textContent = "Send this code to your friend";
-			t3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			p0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("p");
-			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(/*code*/ ctx[0]);
-			t5 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			p1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("p");
-			p1.textContent = "The game will start automatically once your friend connects";
-			t7 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
-			button.textContent = "Exit game";
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(p0, "id", "code");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(p0, "class", "svelte-irr1pp");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "svelte-irr1pp");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "id", "create-new-game");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "svelte-irr1pp");
-		},
-		m(target, anchor) {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, h1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, h2);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t3);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, p0);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(p0, t4);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t5);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, p1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t7);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, button);
-
-			if (!mounted) {
-				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*goHome*/ ctx[1]);
-				mounted = true;
-			}
-		},
-		p(ctx, [dirty]) {
-			if (dirty & /*code*/ 1) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, /*code*/ ctx[0]);
-		},
-		i: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
-		o: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
-		d(detaching) {
-			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
-			mounted = false;
-			dispose();
-		}
-	};
-}
-
-function instance($$self, $$props, $$invalidate) {
-	let { changeRoute } = $$props;
-	const { connectionHandler } = (0,svelte__WEBPACK_IMPORTED_MODULE_1__.getContext)('connectionHandler');
-	let code = '';
-	let seed = '';
-
-	//connectionHandler.socket.on('gameInfo', handleGameInit);
-	connectionHandler.startNewGame();
-
-	connectionHandler.socket.on('gameCode', gameCode => {
-		$$invalidate(0, code = gameCode);
-	});
-
-	function handleGameInit(data) {
-		$$invalidate(0, code = data.code);
-		seed = data.seed;
-		console.log(data);
-	}
-
-	const goHome = () => changeRoute('home');
-
-	$$self.$$set = $$props => {
-		if ('changeRoute' in $$props) $$invalidate(2, changeRoute = $$props.changeRoute);
-	};
-
-	return [code, goHome, changeRoute];
-}
-
-class CreateNewGame extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
-	constructor(options) {
-		super();
-		(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, { changeRoute: 2 }, add_css);
-	}
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (CreateNewGame);
 
 /***/ }),
 
@@ -7560,7 +8048,7 @@ function instance($$self, $$props, $$invalidate) {
 	const { connectionHandler } = (0,svelte__WEBPACK_IMPORTED_MODULE_2__.getContext)('connectionHandler');
 
 	function startGame() {
-		const game = new _Game__WEBPACK_IMPORTED_MODULE_1__["default"](gameInitData.seed, gameInitData.players, gameInitData.playerNumber);
+		const game = new _Game__WEBPACK_IMPORTED_MODULE_1__["default"](gameInitData.seed, gameInitData.players, gameInitData.playerNumber, gameInitData.gameMode || '1v1', gameInitData.teams || { 0: [0], 1: [1] }, gameInitData.options || {});
 	}
 
 	(0,svelte__WEBPACK_IMPORTED_MODULE_2__.onMount)(async () => {
@@ -7604,80 +8092,653 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function add_css(target) {
-	(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append_styles)(target, "svelte-ntnt0", "input.svelte-ntnt0{font-size:1.5rem;max-width:200px;text-align:center}input.svelte-ntnt0:focus{outline:none}#form.svelte-ntnt0{display:flex;gap:1rem;flex-direction:column;align-items:center;background-color:#375284;padding:1rem}");
+	(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append_styles)(target, "svelte-1xuf3yu", "input[type=\"text\"].svelte-1xuf3yu.svelte-1xuf3yu{font-size:1.5rem;max-width:200px;text-align:center}input[type=\"text\"].svelte-1xuf3yu.svelte-1xuf3yu:focus{outline:none}input[type=\"checkbox\"].svelte-1xuf3yu.svelte-1xuf3yu{width:1.2rem;height:1.2rem;margin-right:0.5rem}#form.svelte-1xuf3yu.svelte-1xuf3yu{display:flex;gap:1rem;flex-direction:column;align-items:center;background-color:#375284;padding:1rem}.create-section.svelte-1xuf3yu.svelte-1xuf3yu{background-color:#2a4a6a;padding:1rem;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:0.75rem;width:100%;max-width:300px}.create-section.svelte-1xuf3yu h2.svelte-1xuf3yu{margin:0;font-size:1.2rem}.mode-selector.svelte-1xuf3yu.svelte-1xuf3yu,.options-row.svelte-1xuf3yu.svelte-1xuf3yu{display:flex;align-items:center;gap:0.5rem;width:100%;justify-content:space-between}.options-row.svelte-1xuf3yu label.svelte-1xuf3yu{display:flex;align-items:center;cursor:pointer}select.svelte-1xuf3yu.svelte-1xuf3yu{font-size:1.1rem;padding:0.3rem 0.5rem}.open-games.svelte-1xuf3yu.svelte-1xuf3yu{width:100%;max-width:400px}.open-games.svelte-1xuf3yu h2.svelte-1xuf3yu{text-align:center;margin-bottom:0.5rem}.games-list.svelte-1xuf3yu.svelte-1xuf3yu{display:flex;flex-direction:column;gap:0.5rem}.game-item.svelte-1xuf3yu.svelte-1xuf3yu{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background-color:#4a6fa5;border:none;cursor:pointer;font-size:1rem}.game-item.svelte-1xuf3yu.svelte-1xuf3yu:hover{background-color:#5a8fc5}.game-mode.svelte-1xuf3yu.svelte-1xuf3yu{font-weight:bold}.game-players.svelte-1xuf3yu.svelte-1xuf3yu{color:#aaffaa}.game-code.svelte-1xuf3yu.svelte-1xuf3yu{font-family:monospace;background-color:#00000044;padding:0.2rem 0.5rem;border-radius:3px}button.svelte-1xuf3yu.svelte-1xuf3yu{padding:0.6rem 1.2rem;font-size:1.1rem;cursor:pointer;background-color:#4aaa4a;border:none;color:white;border-radius:4px}button.svelte-1xuf3yu.svelte-1xuf3yu:hover{background-color:#5abb5a}");
 }
 
-function create_fragment(ctx) {
-	let div;
-	let h1;
+function get_each_context(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[24] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_1(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[27] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_2(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[30] = list[i];
+	return child_ctx;
+}
+
+// (68:2) {#if openGames.length > 0}
+function create_if_block_2(ctx) {
+	let div1;
+	let h2;
 	let t1;
-	let p0;
-	let t3;
-	let input;
-	let t4;
-	let p1;
-	let t6;
+	let div0;
+	let each_value_2 = /*openGames*/ ctx[2];
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value_2.length; i += 1) {
+		each_blocks[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
+	}
+
+	return {
+		c() {
+			div1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h2");
+			h2.textContent = "Open Games";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h2, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "games-list svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "open-games svelte-1xuf3yu");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div1, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, h2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, t1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, div0);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(div0, null);
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*joinGame, openGames*/ 4100) {
+				each_value_2 = /*openGames*/ ctx[2];
+				let i;
+
+				for (i = 0; i < each_value_2.length; i += 1) {
+					const child_ctx = get_each_context_2(ctx, each_value_2, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+					} else {
+						each_blocks[i] = create_each_block_2(child_ctx);
+						each_blocks[i].c();
+						each_blocks[i].m(div0, null);
+					}
+				}
+
+				for (; i < each_blocks.length; i += 1) {
+					each_blocks[i].d(1);
+				}
+
+				each_blocks.length = each_value_2.length;
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching);
+		}
+	};
+}
+
+// (72:8) {#each openGames as game}
+function create_each_block_2(ctx) {
 	let button;
+	let span0;
+	let t0_value = /*game*/ ctx[30].gameMode + "";
+	let t0;
+	let t1;
+	let span1;
+	let t2_value = /*game*/ ctx[30].currentPlayers + "";
+	let t2;
+	let t3;
+	let t4_value = /*game*/ ctx[30].totalPlayers + "";
+	let t4;
+	let t5;
+	let t6;
+	let span2;
+	let t7_value = /*game*/ ctx[30].code + "";
+	let t7;
+	let t8;
+	let mounted;
+	let dispose;
+
+	function click_handler() {
+		return /*click_handler*/ ctx[14](/*game*/ ctx[30]);
+	}
+
+	return {
+		c() {
+			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
+			span0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value);
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			span1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t2_value);
+			t3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("/");
+			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t4_value);
+			t5 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(" players");
+			t6 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			span2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t7 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t7_value);
+			t8 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span0, "class", "game-mode svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span1, "class", "game-players svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span2, "class", "game-code svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "game-item svelte-1xuf3yu");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, button, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, span0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span0, t0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, t1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, span1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span1, t2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span1, t3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span1, t4);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span1, t5);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, t6);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, span2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span2, t7);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, t8);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", click_handler);
+				mounted = true;
+			}
+		},
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
+			if (dirty[0] & /*openGames*/ 4 && t0_value !== (t0_value = /*game*/ ctx[30].gameMode + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value);
+			if (dirty[0] & /*openGames*/ 4 && t2_value !== (t2_value = /*game*/ ctx[30].currentPlayers + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t2, t2_value);
+			if (dirty[0] & /*openGames*/ 4 && t4_value !== (t4_value = /*game*/ ctx[30].totalPlayers + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, t4_value);
+			if (dirty[0] & /*openGames*/ 4 && t7_value !== (t7_value = /*game*/ ctx[30].code + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t7, t7_value);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(button);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (93:8) {#each gameModes as mode}
+function create_each_block_1(ctx) {
+	let option;
+	let t_value = /*mode*/ ctx[27].label + "";
+	let t;
+	let option_value_value;
+
+	return {
+		c() {
+			option = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			option.__value = option_value_value = /*mode*/ ctx[27].value;
+			option.value = option.__value;
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
+		}
+	};
+}
+
+// (99:4) {#if isTeamGame}
+function create_if_block_1(ctx) {
+	let div;
+	let label;
+	let t1;
+	let select;
+	let mounted;
+	let dispose;
+	let each_value = /*gameTypes*/ ctx[9];
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value.length; i += 1) {
+		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+	}
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label.textContent = "Game Type:";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			select = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "for", "gameType");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "id", "gameType");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "class", "svelte-1xuf3yu");
+			if (/*gameType*/ ctx[6] === void 0) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => /*select_change_handler*/ ctx[18].call(select));
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "options-row svelte-1xuf3yu");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, label);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, select);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(select, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*gameType*/ ctx[6]);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select, "change", /*select_change_handler*/ ctx[18]);
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*gameTypes*/ 512) {
+				each_value = /*gameTypes*/ ctx[9];
+				let i;
+
+				for (i = 0; i < each_value.length; i += 1) {
+					const child_ctx = get_each_context(ctx, each_value, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+					} else {
+						each_blocks[i] = create_each_block(child_ctx);
+						each_blocks[i].c();
+						each_blocks[i].m(select, null);
+					}
+				}
+
+				for (; i < each_blocks.length; i += 1) {
+					each_blocks[i].d(1);
+				}
+
+				each_blocks.length = each_value.length;
+			}
+
+			if (dirty[0] & /*gameType, gameTypes*/ 576) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*gameType*/ ctx[6]);
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (103:10) {#each gameTypes as type}
+function create_each_block(ctx) {
+	let option;
+	let t_value = /*type*/ ctx[24].label + "";
+	let t;
+	let option_value_value;
+
+	return {
+		c() {
+			option = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			option.__value = option_value_value = /*type*/ ctx[24].value;
+			option.value = option.__value;
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
+		}
+	};
+}
+
+// (120:4) {#if isTeamGame}
+function create_if_block(ctx) {
+	let div0;
+	let label0;
+	let input0;
+	let t0;
+	let t1;
+	let div1;
+	let label1;
+	let input1;
+	let t2;
 	let mounted;
 	let dispose;
 
 	return {
 		c() {
-			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
-			h1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h1");
-			h1.textContent = "Let's play Tunneler";
+			div0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			input0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
+			t0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("\n          Enable Minimap");
 			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			p0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("p");
-			p0.textContent = "Connect to a friend using a code";
-			t3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			input = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
-			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			p1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("p");
-			p1.textContent = "Or create a new game";
-			t6 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
-			button.textContent = "Create a new game";
-			input.autofocus = true;
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "text");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "id", "code");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "placeholder", "abc123");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-ntnt0");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "id", "form");
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "svelte-ntnt0");
+			div1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			input1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
+			t2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("\n          Friendly Fire");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input0, "type", "checkbox");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input0, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label0, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "options-row svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input1, "type", "checkbox");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input1, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label1, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "options-row svelte-1xuf3yu");
 		},
 		m(target, anchor) {
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, h1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, p0);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t3);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, input);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_input_value)(input, /*gameCode*/ ctx[0]);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t4);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, p1);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t6);
-			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, button);
-			input.focus();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div0, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, label0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label0, input0);
+			input0.checked = /*minimap*/ ctx[4];
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label0, t0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t1, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div1, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, label1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label1, input1);
+			input1.checked = /*friendlyFire*/ ctx[5];
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label1, t2);
 
 			if (!mounted) {
 				dispose = [
-					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", /*input_input_handler*/ ctx[4]),
-					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", /*handleInput*/ ctx[2]),
-					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*createGame*/ ctx[1])
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input0, "change", /*input0_change_handler*/ ctx[20]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input1, "change", /*input1_change_handler*/ ctx[21])
 				];
 
 				mounted = true;
 			}
 		},
-		p(ctx, [dirty]) {
-			if (dirty & /*gameCode*/ 1 && input.value !== /*gameCode*/ ctx[0]) {
-				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_input_value)(input, /*gameCode*/ ctx[0]);
+		p(ctx, dirty) {
+			if (dirty[0] & /*minimap*/ 16) {
+				input0.checked = /*minimap*/ ctx[4];
+			}
+
+			if (dirty[0] & /*friendlyFire*/ 32) {
+				input1.checked = /*friendlyFire*/ ctx[5];
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div0);
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1);
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div1);
+			mounted = false;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose);
+		}
+	};
+}
+
+function create_fragment(ctx) {
+	let div3;
+	let h1;
+	let t1;
+	let t2;
+	let p;
+	let t4;
+	let input;
+	let t5;
+	let div2;
+	let h2;
+	let t7;
+	let div0;
+	let label0;
+	let t9;
+	let select0;
+	let t10;
+	let t11;
+	let div1;
+	let label1;
+	let t13;
+	let select1;
+	let option0;
+	let option0_value_value;
+	let option1;
+	let option1_value_value;
+	let option2;
+	let option2_value_value;
+	let option3;
+	let option3_value_value;
+	let t18;
+	let t19;
+	let button;
+	let mounted;
+	let dispose;
+	let if_block0 = /*openGames*/ ctx[2].length > 0 && create_if_block_2(ctx);
+	let each_value_1 = /*gameModes*/ ctx[8];
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value_1.length; i += 1) {
+		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+	}
+
+	let if_block1 = /*isTeamGame*/ ctx[7] && create_if_block_1(ctx);
+	let if_block2 = /*isTeamGame*/ ctx[7] && create_if_block(ctx);
+
+	return {
+		c() {
+			div3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h1");
+			h1.textContent = "Let's play Tunneler";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block0) if_block0.c();
+			t2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			p = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("p");
+			p.textContent = "Or enter a game code";
+			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			input = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
+			t5 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h2");
+			h2.textContent = "Create a new game";
+			t7 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label0.textContent = "Game Mode:";
+			t9 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			select0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			t10 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block1) if_block1.c();
+			t11 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label1.textContent = "Points to Win:";
+			t13 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			select1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+			option0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option0.textContent = "3";
+			option1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option1.textContent = "5";
+			option2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option2.textContent = "7";
+			option3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option3.textContent = "10";
+			t18 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block2) if_block2.c();
+			t19 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
+			button.textContent = "Create Game";
+			input.autofocus = true;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "text");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "id", "code");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "placeholder", "abc123");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h2, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label0, "for", "gamemode");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "id", "gamemode");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "class", "svelte-1xuf3yu");
+			if (/*selectedMode*/ ctx[0] === void 0) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => /*select0_change_handler*/ ctx[17].call(select0));
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "mode-selector svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label1, "for", "maxPoints");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label1, "class", "svelte-1xuf3yu");
+			option0.__value = option0_value_value = 3;
+			option0.value = option0.__value;
+			option1.__value = option1_value_value = 5;
+			option1.value = option1.__value;
+			option2.__value = option2_value_value = 7;
+			option2.value = option2.__value;
+			option3.__value = option3_value_value = 10;
+			option3.value = option3.__value;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "id", "maxPoints");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "class", "svelte-1xuf3yu");
+			if (/*maxPoints*/ ctx[3] === void 0) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => /*select1_change_handler*/ ctx[19].call(select1));
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "options-row svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div2, "class", "create-section svelte-1xuf3yu");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div3, "id", "form");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div3, "class", "svelte-1xuf3yu");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div3, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, h1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t1);
+			if (if_block0) if_block0.m(div3, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, p);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t4);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, input);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_input_value)(input, /*gameCode*/ ctx[1]);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t5);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, div2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, h2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t7);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, div0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, label0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t9);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, select0);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(select0, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select0, /*selectedMode*/ ctx[0]);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t10);
+			if (if_block1) if_block1.m(div2, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t11);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, div1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, label1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, t13);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, select1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select1, option0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select1, option1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select1, option2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select1, option3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select1, /*maxPoints*/ ctx[3]);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t18);
+			if (if_block2) if_block2.m(div2, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t19);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, button);
+			input.focus();
+
+			if (!mounted) {
+				dispose = [
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", /*input_input_handler*/ ctx[15]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", /*handleInput*/ ctx[11]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "keydown", /*keydown_handler*/ ctx[16]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select0, "change", /*select0_change_handler*/ ctx[17]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select1, "change", /*select1_change_handler*/ ctx[19]),
+					(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*createGame*/ ctx[10])
+				];
+
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (/*openGames*/ ctx[2].length > 0) {
+				if (if_block0) {
+					if_block0.p(ctx, dirty);
+				} else {
+					if_block0 = create_if_block_2(ctx);
+					if_block0.c();
+					if_block0.m(div3, t2);
+				}
+			} else if (if_block0) {
+				if_block0.d(1);
+				if_block0 = null;
+			}
+
+			if (dirty[0] & /*gameCode*/ 2 && input.value !== /*gameCode*/ ctx[1]) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_input_value)(input, /*gameCode*/ ctx[1]);
+			}
+
+			if (dirty[0] & /*gameModes*/ 256) {
+				each_value_1 = /*gameModes*/ ctx[8];
+				let i;
+
+				for (i = 0; i < each_value_1.length; i += 1) {
+					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+					} else {
+						each_blocks[i] = create_each_block_1(child_ctx);
+						each_blocks[i].c();
+						each_blocks[i].m(select0, null);
+					}
+				}
+
+				for (; i < each_blocks.length; i += 1) {
+					each_blocks[i].d(1);
+				}
+
+				each_blocks.length = each_value_1.length;
+			}
+
+			if (dirty[0] & /*selectedMode, gameModes*/ 257) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select0, /*selectedMode*/ ctx[0]);
+			}
+
+			if (/*isTeamGame*/ ctx[7]) {
+				if (if_block1) {
+					if_block1.p(ctx, dirty);
+				} else {
+					if_block1 = create_if_block_1(ctx);
+					if_block1.c();
+					if_block1.m(div2, t11);
+				}
+			} else if (if_block1) {
+				if_block1.d(1);
+				if_block1 = null;
+			}
+
+			if (dirty[0] & /*maxPoints*/ 8) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select1, /*maxPoints*/ ctx[3]);
+			}
+
+			if (/*isTeamGame*/ ctx[7]) {
+				if (if_block2) {
+					if_block2.p(ctx, dirty);
+				} else {
+					if_block2 = create_if_block(ctx);
+					if_block2.c();
+					if_block2.m(div2, t19);
+				}
+			} else if (if_block2) {
+				if_block2.d(1);
+				if_block2 = null;
 			}
 		},
 		i: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
 		o: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
 		d(detaching) {
-			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div3);
+			if (if_block0) if_block0.d();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching);
+			if (if_block1) if_block1.d();
+			if (if_block2) if_block2.d();
 			mounted = false;
 			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose);
 		}
@@ -7685,38 +8746,1678 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let isTeamGame;
 	const { connectionHandler } = (0,svelte__WEBPACK_IMPORTED_MODULE_1__.getContext)('connectionHandler');
 	let { changeRoute } = $$props;
 	let gameCode;
+	let selectedMode = '1v1';
+	let openGames = [];
+
+	// Game options
+	let maxPoints = 5;
+
+	let minimap = true;
+	let friendlyFire = true;
+	let gameType = 'elimination';
+
+	const gameModes = [
+		{ value: '1v1', label: '1v1 (Classic)' },
+		{ value: '2v2', label: '2v2 (Team)' },
+		{ value: '3v3', label: '3v3 (Team)' }
+	];
+
+	const gameTypes = [
+		{
+			value: 'elimination',
+			label: 'Last Man Standing',
+			description: 'Eliminate the entire enemy team'
+		},
+		{
+			value: 'capture',
+			label: 'Capture the Flag',
+			description: 'Enter the enemy base to score'
+		},
+		{
+			value: 'deathmatch',
+			label: 'Deathmatch',
+			description: 'First team to X kills wins'
+		}
+	];
 
 	function createGame() {
-		changeRoute('create');
+		const options = {
+			maxPoints,
+			minimap,
+			friendlyFire,
+			gameType
+		};
+
+		connectionHandler.socket.emit('createGame', { gameMode: selectedMode, options });
+		changeRoute('lobby');
 	}
 
 	function handleInput() {
 		connectionHandler.socket.emit('gameCodeInput', gameCode);
 	}
 
+	function joinGame(code) {
+		connectionHandler.socket.emit('gameCodeInput', code);
+		changeRoute('lobby');
+	}
+
+	function refreshGames() {
+		connectionHandler.socket.emit('getOpenGames');
+	}
+
+	(0,svelte__WEBPACK_IMPORTED_MODULE_1__.onMount)(() => {
+		connectionHandler.socket.on('openGamesList', games => {
+			$$invalidate(2, openGames = games);
+		});
+
+		refreshGames();
+
+		// Refresh every 3 seconds
+		const interval = setInterval(refreshGames, 3000);
+
+		return () => clearInterval(interval);
+	});
+
+	const click_handler = game => joinGame(game.code);
+
 	function input_input_handler() {
 		gameCode = this.value;
-		$$invalidate(0, gameCode);
+		$$invalidate(1, gameCode);
+	}
+
+	const keydown_handler = e => e.key === 'Enter' && gameCode && joinGame(gameCode);
+
+	function select0_change_handler() {
+		selectedMode = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this);
+		$$invalidate(0, selectedMode);
+		$$invalidate(8, gameModes);
+	}
+
+	function select_change_handler() {
+		gameType = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this);
+		$$invalidate(6, gameType);
+		$$invalidate(9, gameTypes);
+	}
+
+	function select1_change_handler() {
+		maxPoints = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this);
+		$$invalidate(3, maxPoints);
+	}
+
+	function input0_change_handler() {
+		minimap = this.checked;
+		$$invalidate(4, minimap);
+	}
+
+	function input1_change_handler() {
+		friendlyFire = this.checked;
+		$$invalidate(5, friendlyFire);
 	}
 
 	$$self.$$set = $$props => {
-		if ('changeRoute' in $$props) $$invalidate(3, changeRoute = $$props.changeRoute);
+		if ('changeRoute' in $$props) $$invalidate(13, changeRoute = $$props.changeRoute);
 	};
 
-	return [gameCode, createGame, handleInput, changeRoute, input_input_handler];
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty[0] & /*selectedMode*/ 1) {
+			$: $$invalidate(7, isTeamGame = selectedMode !== '1v1');
+		}
+	};
+
+	return [
+		selectedMode,
+		gameCode,
+		openGames,
+		maxPoints,
+		minimap,
+		friendlyFire,
+		gameType,
+		isTeamGame,
+		gameModes,
+		gameTypes,
+		createGame,
+		handleInput,
+		joinGame,
+		changeRoute,
+		click_handler,
+		input_input_handler,
+		keydown_handler,
+		select0_change_handler,
+		select_change_handler,
+		select1_change_handler,
+		input0_change_handler,
+		input1_change_handler
+	];
 }
 
 class JoinOrCreate extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
 	constructor(options) {
 		super();
-		(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, { changeRoute: 3 }, add_css);
+		(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, { changeRoute: 13 }, add_css, [-1, -1]);
 	}
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (JoinOrCreate);
+
+/***/ }),
+
+/***/ "./src/App/Lobby.svelte":
+/*!******************************!*\
+  !*** ./src/App/Lobby.svelte ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! svelte/internal */ "./node_modules/svelte/internal/index.mjs");
+/* harmony import */ var svelte__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! svelte */ "./node_modules/svelte/index.mjs");
+/* src/App/Lobby.svelte generated by Svelte v3.44.2 */
+
+
+
+
+function add_css(target) {
+	(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append_styles)(target, "svelte-1b6gsyd", ".lobby.svelte-1b6gsyd.svelte-1b6gsyd{display:flex;flex-direction:column;align-items:center;padding:1rem;background-color:#375284;min-height:100vh;gap:1rem}.lobby-header.svelte-1b6gsyd.svelte-1b6gsyd{text-align:center}.lobby-header.svelte-1b6gsyd h1.svelte-1b6gsyd{margin:0 0 0.5rem 0}.game-code.svelte-1b6gsyd.svelte-1b6gsyd{font-size:1.2rem;margin-bottom:0.25rem}.game-code.svelte-1b6gsyd .label.svelte-1b6gsyd{color:#aaa}.game-code.svelte-1b6gsyd .code.svelte-1b6gsyd{font-family:monospace;font-size:1.5rem;background-color:#00000044;padding:0.2rem 0.5rem;border-radius:3px;letter-spacing:2px}.game-mode.svelte-1b6gsyd.svelte-1b6gsyd{font-size:1.1rem;color:#aaffaa}.error.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#ff4444;color:white;padding:0.5rem 1rem;border-radius:4px}.your-info.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#4a6fa5;padding:0.5rem 1rem;border-radius:4px}.your-name.svelte-1b6gsyd.svelte-1b6gsyd{font-weight:bold;font-size:1.2rem}.your-label.svelte-1b6gsyd.svelte-1b6gsyd{color:#aaa;margin-left:0.5rem}.teams-container.svelte-1b6gsyd.svelte-1b6gsyd{display:flex;gap:1rem;align-items:center;width:100%;max-width:700px}.team.svelte-1b6gsyd.svelte-1b6gsyd{flex:1;padding:1rem;border-radius:8px;text-align:center}.team-blue.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#2a4a7a;border:2px solid #4a8aff}.team-green.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#2a5a2a;border:2px solid #4aff4a}.team.svelte-1b6gsyd h2.svelte-1b6gsyd{margin:0 0 0.5rem 0;font-size:1.2rem}.team-blue.svelte-1b6gsyd h2.svelte-1b6gsyd{color:#4a8aff}.team-green.svelte-1b6gsyd h2.svelte-1b6gsyd{color:#4aff4a}.vs.svelte-1b6gsyd.svelte-1b6gsyd{font-size:1.5rem;font-weight:bold;color:#888}.team-slots.svelte-1b6gsyd.svelte-1b6gsyd{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem}.player-slot.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#00000033;padding:0.5rem;border-radius:4px;display:flex;justify-content:space-between;align-items:center}.player-slot.is-you.svelte-1b6gsyd.svelte-1b6gsyd{border:2px solid #ffaa00}.player-slot.empty.svelte-1b6gsyd.svelte-1b6gsyd{border:2px dashed #666;background-color:transparent}.player-name.svelte-1b6gsyd.svelte-1b6gsyd{font-weight:bold}.waiting.svelte-1b6gsyd.svelte-1b6gsyd{color:#888;font-style:italic}.host-badge.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#ffaa00;color:#000;padding:0.1rem 0.3rem;border-radius:3px;font-size:0.7rem;font-weight:bold}.join-team-btn.svelte-1b6gsyd.svelte-1b6gsyd{padding:0.3rem 0.8rem;font-size:0.9rem;cursor:pointer;background-color:#555;border:none;color:white;border-radius:4px}.join-team-btn.svelte-1b6gsyd.svelte-1b6gsyd:hover{background-color:#777}.game-options.svelte-1b6gsyd.svelte-1b6gsyd{background-color:#2a3a5a;padding:1rem;border-radius:8px;width:100%;max-width:300px}.game-options.svelte-1b6gsyd h3.svelte-1b6gsyd{margin:0 0 0.75rem 0;text-align:center}.option.svelte-1b6gsyd.svelte-1b6gsyd{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem}.option.svelte-1b6gsyd label.svelte-1b6gsyd{color:#ccc}.option.svelte-1b6gsyd select.svelte-1b6gsyd,.option.svelte-1b6gsyd input[type=\"checkbox\"].svelte-1b6gsyd{font-size:1rem}.option-value.svelte-1b6gsyd.svelte-1b6gsyd{font-weight:bold;color:#aaffaa}.start-btn.svelte-1b6gsyd.svelte-1b6gsyd{padding:1rem 2rem;font-size:1.3rem;cursor:pointer;background-color:#4aff4a;color:#000;border:none;border-radius:8px;font-weight:bold}.start-btn.svelte-1b6gsyd.svelte-1b6gsyd:disabled{background-color:#555;color:#888;cursor:not-allowed}.start-btn.svelte-1b6gsyd.svelte-1b6gsyd:not(:disabled):hover{background-color:#6aff6a}.waiting-host.svelte-1b6gsyd.svelte-1b6gsyd{font-size:1.2rem;color:#aaa;font-style:italic}");
+}
+
+function get_each_context(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[23] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_1(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[26] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_2(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[29] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_3(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[26] = list[i];
+	return child_ctx;
+}
+
+function get_each_context_4(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[29] = list[i];
+	return child_ctx;
+}
+
+// (87:2) {#if errorMsg}
+function create_if_block_12(ctx) {
+	let div;
+	let t;
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(/*errorMsg*/ ctx[5]);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "error svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*errorMsg*/ 32) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, /*errorMsg*/ ctx[5]);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+		}
+	};
+}
+
+// (103:12) {#if player.isHost}
+function create_if_block_11(ctx) {
+	let span;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			span.textContent = "HOST";
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "host-badge svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (100:8) {#each getTeamPlayers(0) as player}
+function create_each_block_4(ctx) {
+	let div;
+	let span;
+	let t0_value = /*player*/ ctx[29].username + "";
+	let t0;
+	let t1;
+	let if_block = /*player*/ ctx[29].isHost && create_if_block_11(ctx);
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value);
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block) if_block.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "player-name svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "player-slot svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(div, "is-you", /*player*/ ctx[29].playerNumber === /*playerNumber*/ ctx[0]);
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, span);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
+			if (if_block) if_block.m(div, null);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*getTeamPlayers, playerNumber*/ 2049) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(div, "is-you", /*player*/ ctx[29].playerNumber === /*playerNumber*/ ctx[0]);
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+			if (if_block) if_block.d();
+		}
+	};
+}
+
+// (108:8) {#each Array(lobbyState?.playersPerTeam - getTeamPlayers(0).length) as _}
+function create_each_block_3(ctx) {
+	let div;
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+
+			div.innerHTML = `<span class="waiting svelte-1b6gsyd">Waiting...</span> 
+          `;
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "player-slot empty svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+		}
+	};
+}
+
+// (114:6) {#if myTeam !== 0 && canSwitchTeam}
+function create_if_block_10(ctx) {
+	let button;
+	let mounted;
+	let dispose;
+
+	return {
+		c() {
+			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
+			button.textContent = "Join Blue";
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "join-team-btn svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, button, anchor);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*switchTeam*/ ctx[8]);
+				mounted = true;
+			}
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(button);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (127:12) {#if player.isHost}
+function create_if_block_9(ctx) {
+	let span;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			span.textContent = "HOST";
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "host-badge svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (124:8) {#each getTeamPlayers(1) as player}
+function create_each_block_2(ctx) {
+	let div;
+	let span;
+	let t0_value = /*player*/ ctx[29].username + "";
+	let t0;
+	let t1;
+	let if_block = /*player*/ ctx[29].isHost && create_if_block_9(ctx);
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value);
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block) if_block.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "player-name svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "player-slot svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(div, "is-you", /*player*/ ctx[29].playerNumber === /*playerNumber*/ ctx[0]);
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, span);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
+			if (if_block) if_block.m(div, null);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*getTeamPlayers, playerNumber*/ 2049) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(div, "is-you", /*player*/ ctx[29].playerNumber === /*playerNumber*/ ctx[0]);
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+			if (if_block) if_block.d();
+		}
+	};
+}
+
+// (132:8) {#each Array(lobbyState?.playersPerTeam - getTeamPlayers(1).length) as _}
+function create_each_block_1(ctx) {
+	let div;
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+
+			div.innerHTML = `<span class="waiting svelte-1b6gsyd">Waiting...</span> 
+          `;
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "player-slot empty svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+		}
+	};
+}
+
+// (138:6) {#if myTeam !== 1 && !isTeamFull(1)}
+function create_if_block_8(ctx) {
+	let button;
+	let mounted;
+	let dispose;
+
+	return {
+		c() {
+			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
+			button.textContent = "Join Green";
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "join-team-btn svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, button, anchor);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*switchTeam*/ ctx[8]);
+				mounted = true;
+			}
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(button);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (147:4) {#if isTeamGame}
+function create_if_block_6(ctx) {
+	let div;
+	let label;
+	let t1;
+
+	function select_block_type(ctx, dirty) {
+		if (/*isHost*/ ctx[2]) return create_if_block_7;
+		return create_else_block_5;
+	}
+
+	let current_block_type = select_block_type(ctx, [-1, -1]);
+	let if_block = current_block_type(ctx);
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label.textContent = "Game Type:";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if_block.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "for", "gameType");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "option svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, label);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1);
+			if_block.m(div, null);
+		},
+		p(ctx, dirty) {
+			if (current_block_type === (current_block_type = select_block_type(ctx, dirty)) && if_block) {
+				if_block.p(ctx, dirty);
+			} else {
+				if_block.d(1);
+				if_block = current_block_type(ctx);
+
+				if (if_block) {
+					if_block.c();
+					if_block.m(div, null);
+				}
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+			if_block.d();
+		}
+	};
+}
+
+// (156:8) {:else}
+function create_else_block_5(ctx) {
+	let span;
+	let t_value = /*getGameTypeLabel*/ ctx[15](/*lobbyState*/ ctx[3]?.options?.gameType) + "";
+	let t;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "option-value svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState*/ 8 && t_value !== (t_value = /*getGameTypeLabel*/ ctx[15](/*lobbyState*/ ctx[3]?.options?.gameType) + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (150:8) {#if isHost}
+function create_if_block_7(ctx) {
+	let select;
+	let select_value_value;
+	let mounted;
+	let dispose;
+	let each_value = /*gameTypes*/ ctx[14];
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value.length; i += 1) {
+		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+	}
+
+	return {
+		c() {
+			select = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "id", "gameType");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "class", "svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, select, anchor);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(select, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*lobbyState*/ ctx[3]?.options?.gameType || 'elimination');
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select, "change", /*change_handler*/ ctx[17]);
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*gameTypes*/ 16384) {
+				each_value = /*gameTypes*/ ctx[14];
+				let i;
+
+				for (i = 0; i < each_value.length; i += 1) {
+					const child_ctx = get_each_context(ctx, each_value, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+					} else {
+						each_blocks[i] = create_each_block(child_ctx);
+						each_blocks[i].c();
+						each_blocks[i].m(select, null);
+					}
+				}
+
+				for (; i < each_blocks.length; i += 1) {
+					each_blocks[i].d(1);
+				}
+
+				each_blocks.length = each_value.length;
+			}
+
+			if (dirty[0] & /*lobbyState, gameTypes*/ 16392 && select_value_value !== (select_value_value = /*lobbyState*/ ctx[3]?.options?.gameType || 'elimination')) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*lobbyState*/ ctx[3]?.options?.gameType || 'elimination');
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(select);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (152:12) {#each gameTypes as type}
+function create_each_block(ctx) {
+	let option;
+	let t_value = /*type*/ ctx[23].label + "";
+	let t;
+	let option_value_value;
+
+	return {
+		c() {
+			option = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			option.__value = option_value_value = /*type*/ ctx[23].value;
+			option.value = option.__value;
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
+		}
+	};
+}
+
+// (171:6) {:else}
+function create_else_block_4(ctx) {
+	let span;
+	let t_value = (/*lobbyState*/ ctx[3]?.options?.maxPoints || 5) + "";
+	let t;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "option-value svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState*/ 8 && t_value !== (t_value = (/*lobbyState*/ ctx[3]?.options?.maxPoints || 5) + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (164:6) {#if isHost}
+function create_if_block_5(ctx) {
+	let select;
+	let option0;
+	let option1;
+	let option2;
+	let option3;
+	let select_value_value;
+	let mounted;
+	let dispose;
+
+	return {
+		c() {
+			select = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+			option0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option0.textContent = "3";
+			option1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option1.textContent = "5";
+			option2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option2.textContent = "7";
+			option3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option");
+			option3.textContent = "10";
+			option0.__value = "3";
+			option0.value = option0.__value;
+			option1.__value = "5";
+			option1.value = option1.__value;
+			option2.__value = "7";
+			option2.value = option2.__value;
+			option3.__value = "10";
+			option3.value = option3.__value;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "id", "maxPoints");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "class", "svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, select, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select, option0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select, option1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select, option2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(select, option3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*lobbyState*/ ctx[3]?.options?.maxPoints || 5);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select, "change", /*change_handler_1*/ ctx[18]);
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState, gameTypes*/ 16392 && select_value_value !== (select_value_value = /*lobbyState*/ ctx[3]?.options?.maxPoints || 5)) {
+				(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, /*lobbyState*/ ctx[3]?.options?.maxPoints || 5);
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(select);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (176:4) {#if isTeamGame}
+function create_if_block_2(ctx) {
+	let div0;
+	let label0;
+	let t1;
+	let t2;
+	let div1;
+	let label1;
+	let t4;
+
+	function select_block_type_2(ctx, dirty) {
+		if (/*isHost*/ ctx[2]) return create_if_block_4;
+		return create_else_block_3;
+	}
+
+	let current_block_type = select_block_type_2(ctx, [-1, -1]);
+	let if_block0 = current_block_type(ctx);
+
+	function select_block_type_3(ctx, dirty) {
+		if (/*isHost*/ ctx[2]) return create_if_block_3;
+		return create_else_block_2;
+	}
+
+	let current_block_type_1 = select_block_type_3(ctx, [-1, -1]);
+	let if_block1 = current_block_type_1(ctx);
+
+	return {
+		c() {
+			div0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label0.textContent = "Minimap:";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if_block0.c();
+			t2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label1.textContent = "Friendly Fire:";
+			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if_block1.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label0, "for", "minimap");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label0, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "option svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label1, "for", "friendlyFire");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label1, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "option svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div0, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, label0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t1);
+			if_block0.m(div0, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t2, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div1, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, label1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, t4);
+			if_block1.m(div1, null);
+		},
+		p(ctx, dirty) {
+			if (current_block_type === (current_block_type = select_block_type_2(ctx, dirty)) && if_block0) {
+				if_block0.p(ctx, dirty);
+			} else {
+				if_block0.d(1);
+				if_block0 = current_block_type(ctx);
+
+				if (if_block0) {
+					if_block0.c();
+					if_block0.m(div0, null);
+				}
+			}
+
+			if (current_block_type_1 === (current_block_type_1 = select_block_type_3(ctx, dirty)) && if_block1) {
+				if_block1.p(ctx, dirty);
+			} else {
+				if_block1.d(1);
+				if_block1 = current_block_type_1(ctx);
+
+				if (if_block1) {
+					if_block1.c();
+					if_block1.m(div1, null);
+				}
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div0);
+			if_block0.d();
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t2);
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div1);
+			if_block1.d();
+		}
+	};
+}
+
+// (181:8) {:else}
+function create_else_block_3(ctx) {
+	let span;
+
+	let t_value = (/*lobbyState*/ ctx[3]?.options?.minimap !== false
+	? 'On'
+	: 'Off') + "";
+
+	let t;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "option-value svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState*/ 8 && t_value !== (t_value = (/*lobbyState*/ ctx[3]?.options?.minimap !== false
+			? 'On'
+			: 'Off') + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (179:8) {#if isHost}
+function create_if_block_4(ctx) {
+	let input;
+	let input_checked_value;
+	let mounted;
+	let dispose;
+
+	return {
+		c() {
+			input = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "checkbox");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "id", "minimap");
+			input.checked = input_checked_value = /*lobbyState*/ ctx[3]?.options?.minimap !== false;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, input, anchor);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "change", /*change_handler_2*/ ctx[19]);
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState, gameTypes*/ 16392 && input_checked_value !== (input_checked_value = /*lobbyState*/ ctx[3]?.options?.minimap !== false)) {
+				input.checked = input_checked_value;
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(input);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (190:8) {:else}
+function create_else_block_2(ctx) {
+	let span;
+
+	let t_value = (/*lobbyState*/ ctx[3]?.options?.friendlyFire !== false
+	? 'On'
+	: 'Off') + "";
+
+	let t;
+
+	return {
+		c() {
+			span = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "option-value svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState*/ 8 && t_value !== (t_value = (/*lobbyState*/ ctx[3]?.options?.friendlyFire !== false
+			? 'On'
+			: 'Off') + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span);
+		}
+	};
+}
+
+// (188:8) {#if isHost}
+function create_if_block_3(ctx) {
+	let input;
+	let input_checked_value;
+	let mounted;
+	let dispose;
+
+	return {
+		c() {
+			input = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "checkbox");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "id", "friendlyFire");
+			input.checked = input_checked_value = /*lobbyState*/ ctx[3]?.options?.friendlyFire !== false;
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, input, anchor);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "change", /*change_handler_3*/ ctx[20]);
+				mounted = true;
+			}
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState, gameTypes*/ 16392 && input_checked_value !== (input_checked_value = /*lobbyState*/ ctx[3]?.options?.friendlyFire !== false)) {
+				input.checked = input_checked_value;
+			}
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(input);
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (205:2) {:else}
+function create_else_block_1(ctx) {
+	let div;
+
+	return {
+		c() {
+			div = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			div.textContent = "Waiting for host to start...";
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "waiting-host svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div);
+		}
+	};
+}
+
+// (197:2) {#if isHost}
+function create_if_block(ctx) {
+	let button;
+	let show_if;
+	let button_disabled_value;
+	let mounted;
+	let dispose;
+
+	function select_block_type_5(ctx, dirty) {
+		if (/*canStart*/ ctx[12]()) return create_if_block_1;
+		return create_else_block;
+	}
+
+	let current_block_type = select_block_type_5(ctx, [-1, -1]);
+	let if_block = current_block_type(ctx);
+
+	return {
+		c() {
+			button = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button");
+			if_block.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "start-btn svelte-1b6gsyd");
+			button.disabled = button_disabled_value = !/*canStart*/ ctx[12]();
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, button, anchor);
+			if_block.m(button, null);
+
+			if (!mounted) {
+				dispose = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", /*startGame*/ ctx[10]);
+				mounted = true;
+			}
+		},
+		p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(button);
+			if_block.d();
+			mounted = false;
+			dispose();
+		}
+	};
+}
+
+// (201:6) {:else}
+function create_else_block(ctx) {
+	let t;
+
+	return {
+		c() {
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("Need players on both teams");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t);
+		}
+	};
+}
+
+// (199:6) {#if canStart()}
+function create_if_block_1(ctx) {
+	let t;
+
+	return {
+		c() {
+			t = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("Start Game");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t, anchor);
+		},
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t);
+		}
+	};
+}
+
+function create_fragment(ctx) {
+	let div12;
+	let div2;
+	let h1;
+	let t1;
+	let div0;
+	let span0;
+	let t3;
+	let span1;
+	let t4_value = (/*lobbyState*/ ctx[3]?.code || '...') + "";
+	let t4;
+	let t5;
+	let div1;
+	let t6_value = (/*lobbyState*/ ctx[3]?.gameMode || '...') + "";
+	let t6;
+	let t7;
+	let t8;
+	let div3;
+	let span2;
+	let t9;
+	let t10;
+	let span3;
+	let t12;
+	let div9;
+	let div5;
+	let h20;
+	let t14;
+	let div4;
+	let t15;
+	let t16;
+	let t17;
+	let div6;
+	let t19;
+	let div8;
+	let h21;
+	let t21;
+	let div7;
+	let t22;
+	let t23;
+	let show_if = /*myTeam*/ ctx[4] !== 1 && !/*isTeamFull*/ ctx[13](1);
+	let t24;
+	let div11;
+	let h3;
+	let t26;
+	let t27;
+	let div10;
+	let label;
+	let t29;
+	let t30;
+	let t31;
+	let if_block0 = /*errorMsg*/ ctx[5] && create_if_block_12(ctx);
+	let each_value_4 = /*getTeamPlayers*/ ctx[11](0);
+	let each_blocks_3 = [];
+
+	for (let i = 0; i < each_value_4.length; i += 1) {
+		each_blocks_3[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
+	}
+
+	let each_value_3 = Array(/*lobbyState*/ ctx[3]?.playersPerTeam - /*getTeamPlayers*/ ctx[11](0).length);
+	let each_blocks_2 = [];
+
+	for (let i = 0; i < each_value_3.length; i += 1) {
+		each_blocks_2[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
+	}
+
+	let if_block1 = /*myTeam*/ ctx[4] !== 0 && /*canSwitchTeam*/ ctx[7] && create_if_block_10(ctx);
+	let each_value_2 = /*getTeamPlayers*/ ctx[11](1);
+	let each_blocks_1 = [];
+
+	for (let i = 0; i < each_value_2.length; i += 1) {
+		each_blocks_1[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
+	}
+
+	let each_value_1 = Array(/*lobbyState*/ ctx[3]?.playersPerTeam - /*getTeamPlayers*/ ctx[11](1).length);
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value_1.length; i += 1) {
+		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+	}
+
+	let if_block2 = show_if && create_if_block_8(ctx);
+	let if_block3 = /*isTeamGame*/ ctx[6] && create_if_block_6(ctx);
+
+	function select_block_type_1(ctx, dirty) {
+		if (/*isHost*/ ctx[2]) return create_if_block_5;
+		return create_else_block_4;
+	}
+
+	let current_block_type = select_block_type_1(ctx, [-1, -1]);
+	let if_block4 = current_block_type(ctx);
+	let if_block5 = /*isTeamGame*/ ctx[6] && create_if_block_2(ctx);
+
+	function select_block_type_4(ctx, dirty) {
+		if (/*isHost*/ ctx[2]) return create_if_block;
+		return create_else_block_1;
+	}
+
+	let current_block_type_1 = select_block_type_4(ctx, [-1, -1]);
+	let if_block6 = current_block_type_1(ctx);
+
+	return {
+		c() {
+			div12 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			div2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h1");
+			h1.textContent = "Game Lobby";
+			t1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			span0 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			span0.textContent = "Code:";
+			t3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			span1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t4_value);
+			t5 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div1 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			t6 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t6_value);
+			t7 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block0) if_block0.c();
+			t8 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			span2 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			t9 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(/*username*/ ctx[1]);
+			t10 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			span3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span");
+			span3.textContent = "(You)";
+			t12 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div9 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			div5 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h20 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h2");
+			h20.textContent = "Blue Team";
+			t14 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div4 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+
+			for (let i = 0; i < each_blocks_3.length; i += 1) {
+				each_blocks_3[i].c();
+			}
+
+			t15 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+
+			for (let i = 0; i < each_blocks_2.length; i += 1) {
+				each_blocks_2[i].c();
+			}
+
+			t16 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block1) if_block1.c();
+			t17 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div6 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			div6.textContent = "VS";
+			t19 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div8 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h21 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h2");
+			h21.textContent = "Green Team";
+			t21 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div7 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				each_blocks_1[i].c();
+			}
+
+			t22 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			t23 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block2) if_block2.c();
+			t24 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div11 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			h3 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("h3");
+			h3.textContent = "Game Settings";
+			t26 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block3) if_block3.c();
+			t27 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			div10 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div");
+			label = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label");
+			label.textContent = "Points to Win:";
+			t29 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if_block4.c();
+			t30 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if (if_block5) if_block5.c();
+			t31 = (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
+			if_block6.c();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h1, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span0, "class", "label svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span1, "class", "code svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "game-code svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "game-mode svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div2, "class", "lobby-header svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span2, "class", "your-name svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span3, "class", "your-label svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div3, "class", "your-info svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h20, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div4, "class", "team-slots svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div5, "class", "team team-blue svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div6, "class", "vs svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h21, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div7, "class", "team-slots svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div8, "class", "team team-green svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div9, "class", "teams-container svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(h3, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "for", "maxPoints");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div10, "class", "option svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div11, "class", "game-options svelte-1b6gsyd");
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div12, "class", "lobby svelte-1b6gsyd");
+		},
+		m(target, anchor) {
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div12, anchor);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, div2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, h1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, div0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, span0);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, span1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span1, t4);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, t5);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div2, div1);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, t6);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, t7);
+			if (if_block0) if_block0.m(div12, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, t8);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, div3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, span2);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span2, t9);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t10);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, span3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, t12);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, div9);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div5);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, h20);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, t14);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, div4);
+
+			for (let i = 0; i < each_blocks_3.length; i += 1) {
+				each_blocks_3[i].m(div4, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div4, t15);
+
+			for (let i = 0; i < each_blocks_2.length; i += 1) {
+				each_blocks_2[i].m(div4, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, t16);
+			if (if_block1) if_block1.m(div5, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t17);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div6);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t19);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div8);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, h21);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t21);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div7);
+
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				each_blocks_1[i].m(div7, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div7, t22);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(div7, null);
+			}
+
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t23);
+			if (if_block2) if_block2.m(div8, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, t24);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, div11);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div11, h3);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div11, t26);
+			if (if_block3) if_block3.m(div11, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div11, t27);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div11, div10);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div10, label);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div10, t29);
+			if_block4.m(div10, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div11, t30);
+			if (if_block5) if_block5.m(div11, null);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div12, t31);
+			if_block6.m(div12, null);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*lobbyState*/ 8 && t4_value !== (t4_value = (/*lobbyState*/ ctx[3]?.code || '...') + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, t4_value);
+			if (dirty[0] & /*lobbyState*/ 8 && t6_value !== (t6_value = (/*lobbyState*/ ctx[3]?.gameMode || '...') + "")) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t6, t6_value);
+
+			if (/*errorMsg*/ ctx[5]) {
+				if (if_block0) {
+					if_block0.p(ctx, dirty);
+				} else {
+					if_block0 = create_if_block_12(ctx);
+					if_block0.c();
+					if_block0.m(div12, t8);
+				}
+			} else if (if_block0) {
+				if_block0.d(1);
+				if_block0 = null;
+			}
+
+			if (dirty[0] & /*username*/ 2) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t9, /*username*/ ctx[1]);
+
+			if (dirty[0] & /*getTeamPlayers, playerNumber*/ 2049) {
+				each_value_4 = /*getTeamPlayers*/ ctx[11](0);
+				let i;
+
+				for (i = 0; i < each_value_4.length; i += 1) {
+					const child_ctx = get_each_context_4(ctx, each_value_4, i);
+
+					if (each_blocks_3[i]) {
+						each_blocks_3[i].p(child_ctx, dirty);
+					} else {
+						each_blocks_3[i] = create_each_block_4(child_ctx);
+						each_blocks_3[i].c();
+						each_blocks_3[i].m(div4, t15);
+					}
+				}
+
+				for (; i < each_blocks_3.length; i += 1) {
+					each_blocks_3[i].d(1);
+				}
+
+				each_blocks_3.length = each_value_4.length;
+			}
+
+			if (dirty[0] & /*lobbyState*/ 8) {
+				const old_length = each_value_3.length;
+				each_value_3 = Array(/*lobbyState*/ ctx[3]?.playersPerTeam - /*getTeamPlayers*/ ctx[11](0).length);
+				let i;
+
+				for (i = old_length; i < each_value_3.length; i += 1) {
+					const child_ctx = get_each_context_3(ctx, each_value_3, i);
+
+					if (!each_blocks_2[i]) {
+						each_blocks_2[i] = create_each_block_3(child_ctx);
+						each_blocks_2[i].c();
+						each_blocks_2[i].m(div4, null);
+					}
+				}
+
+				for (i = each_value_3.length; i < old_length; i += 1) {
+					each_blocks_2[i].d(1);
+				}
+
+				each_blocks_2.length = each_value_3.length;
+			}
+
+			if (/*myTeam*/ ctx[4] !== 0 && /*canSwitchTeam*/ ctx[7]) {
+				if (if_block1) {
+					if_block1.p(ctx, dirty);
+				} else {
+					if_block1 = create_if_block_10(ctx);
+					if_block1.c();
+					if_block1.m(div5, null);
+				}
+			} else if (if_block1) {
+				if_block1.d(1);
+				if_block1 = null;
+			}
+
+			if (dirty[0] & /*getTeamPlayers, playerNumber*/ 2049) {
+				each_value_2 = /*getTeamPlayers*/ ctx[11](1);
+				let i;
+
+				for (i = 0; i < each_value_2.length; i += 1) {
+					const child_ctx = get_each_context_2(ctx, each_value_2, i);
+
+					if (each_blocks_1[i]) {
+						each_blocks_1[i].p(child_ctx, dirty);
+					} else {
+						each_blocks_1[i] = create_each_block_2(child_ctx);
+						each_blocks_1[i].c();
+						each_blocks_1[i].m(div7, t22);
+					}
+				}
+
+				for (; i < each_blocks_1.length; i += 1) {
+					each_blocks_1[i].d(1);
+				}
+
+				each_blocks_1.length = each_value_2.length;
+			}
+
+			if (dirty[0] & /*lobbyState*/ 8) {
+				const old_length = each_value_1.length;
+				each_value_1 = Array(/*lobbyState*/ ctx[3]?.playersPerTeam - /*getTeamPlayers*/ ctx[11](1).length);
+				let i;
+
+				for (i = old_length; i < each_value_1.length; i += 1) {
+					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+
+					if (!each_blocks[i]) {
+						each_blocks[i] = create_each_block_1(child_ctx);
+						each_blocks[i].c();
+						each_blocks[i].m(div7, null);
+					}
+				}
+
+				for (i = each_value_1.length; i < old_length; i += 1) {
+					each_blocks[i].d(1);
+				}
+
+				each_blocks.length = each_value_1.length;
+			}
+
+			if (dirty[0] & /*myTeam*/ 16) show_if = /*myTeam*/ ctx[4] !== 1 && !/*isTeamFull*/ ctx[13](1);
+
+			if (show_if) {
+				if (if_block2) {
+					if_block2.p(ctx, dirty);
+				} else {
+					if_block2 = create_if_block_8(ctx);
+					if_block2.c();
+					if_block2.m(div8, null);
+				}
+			} else if (if_block2) {
+				if_block2.d(1);
+				if_block2 = null;
+			}
+
+			if (/*isTeamGame*/ ctx[6]) {
+				if (if_block3) {
+					if_block3.p(ctx, dirty);
+				} else {
+					if_block3 = create_if_block_6(ctx);
+					if_block3.c();
+					if_block3.m(div11, t27);
+				}
+			} else if (if_block3) {
+				if_block3.d(1);
+				if_block3 = null;
+			}
+
+			if (current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block4) {
+				if_block4.p(ctx, dirty);
+			} else {
+				if_block4.d(1);
+				if_block4 = current_block_type(ctx);
+
+				if (if_block4) {
+					if_block4.c();
+					if_block4.m(div10, null);
+				}
+			}
+
+			if (/*isTeamGame*/ ctx[6]) {
+				if (if_block5) {
+					if_block5.p(ctx, dirty);
+				} else {
+					if_block5 = create_if_block_2(ctx);
+					if_block5.c();
+					if_block5.m(div11, null);
+				}
+			} else if (if_block5) {
+				if_block5.d(1);
+				if_block5 = null;
+			}
+
+			if (current_block_type_1 === (current_block_type_1 = select_block_type_4(ctx, dirty)) && if_block6) {
+				if_block6.p(ctx, dirty);
+			} else {
+				if_block6.d(1);
+				if_block6 = current_block_type_1(ctx);
+
+				if (if_block6) {
+					if_block6.c();
+					if_block6.m(div12, null);
+				}
+			}
+		},
+		i: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		o: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+		d(detaching) {
+			if (detaching) (0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div12);
+			if (if_block0) if_block0.d();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_3, detaching);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_2, detaching);
+			if (if_block1) if_block1.d();
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_1, detaching);
+			(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching);
+			if (if_block2) if_block2.d();
+			if (if_block3) if_block3.d();
+			if_block4.d();
+			if (if_block5) if_block5.d();
+			if_block6.d();
+		}
+	};
+}
+
+function instance($$self, $$props, $$invalidate) {
+	let myTeam;
+	let otherTeam;
+	let canSwitchTeam;
+	let isTeamGame;
+	const { connectionHandler } = (0,svelte__WEBPACK_IMPORTED_MODULE_1__.getContext)('connectionHandler');
+	let { playerNumber } = $$props;
+	let { username } = $$props;
+	let { isHost } = $$props;
+	let lobbyState = null;
+	let errorMsg = '';
+	let errorTimeout;
+
+	(0,svelte__WEBPACK_IMPORTED_MODULE_1__.onMount)(() => {
+		connectionHandler.socket.on('lobbyUpdate', state => {
+			$$invalidate(3, lobbyState = state);
+		});
+
+		connectionHandler.socket.on('error', ({ message }) => {
+			$$invalidate(5, errorMsg = message);
+			clearTimeout(errorTimeout);
+
+			errorTimeout = setTimeout(
+				() => {
+					$$invalidate(5, errorMsg = '');
+				},
+				3000
+			);
+		});
+	});
+
+	(0,svelte__WEBPACK_IMPORTED_MODULE_1__.onDestroy)(() => {
+		clearTimeout(errorTimeout);
+	});
+
+	function switchTeam() {
+		connectionHandler.socket.emit('switchTeam');
+	}
+
+	function updateOption(key, value) {
+		connectionHandler.socket.emit('updateGameOptions', { [key]: value });
+	}
+
+	function startGame() {
+		connectionHandler.socket.emit('startGame');
+	}
+
+	function getTeamPlayers(teamNum) {
+		if (!lobbyState) return [];
+		return Object.values(lobbyState.players).filter(p => p.team === teamNum);
+	}
+
+	function canStart() {
+		if (!lobbyState) return false;
+		const team0 = getTeamPlayers(0);
+		const team1 = getTeamPlayers(1);
+		return team0.length >= 1 && team1.length >= 1;
+	}
+
+	function isTeamFull(teamNum) {
+		if (!lobbyState) return true;
+		return getTeamPlayers(teamNum).length >= lobbyState.playersPerTeam;
+	}
+
+	const gameTypes = [
+		{
+			value: 'elimination',
+			label: 'Last Man Standing',
+			description: 'Eliminate the entire enemy team'
+		},
+		{
+			value: 'capture',
+			label: 'Capture the Flag',
+			description: 'Enter the enemy base to score'
+		},
+		{
+			value: 'deathmatch',
+			label: 'Deathmatch',
+			description: 'First team to X kills wins'
+		}
+	];
+
+	function getGameTypeLabel(type) {
+		const found = gameTypes.find(t => t.value === type);
+		return found ? found.label : type;
+	}
+
+	const change_handler = e => updateOption('gameType', e.target.value);
+	const change_handler_1 = e => updateOption('maxPoints', parseInt(e.target.value));
+	const change_handler_2 = e => updateOption('minimap', e.target.checked);
+	const change_handler_3 = e => updateOption('friendlyFire', e.target.checked);
+
+	$$self.$$set = $$props => {
+		if ('playerNumber' in $$props) $$invalidate(0, playerNumber = $$props.playerNumber);
+		if ('username' in $$props) $$invalidate(1, username = $$props.username);
+		if ('isHost' in $$props) $$invalidate(2, isHost = $$props.isHost);
+	};
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty[0] & /*lobbyState, playerNumber*/ 9) {
+			$: $$invalidate(4, myTeam = lobbyState?.players[playerNumber]?.team);
+		}
+
+		if ($$self.$$.dirty[0] & /*myTeam*/ 16) {
+			$: $$invalidate(16, otherTeam = myTeam === 0 ? 1 : 0);
+		}
+
+		if ($$self.$$.dirty[0] & /*otherTeam*/ 65536) {
+			$: $$invalidate(7, canSwitchTeam = !isTeamFull(otherTeam));
+		}
+
+		if ($$self.$$.dirty[0] & /*lobbyState*/ 8) {
+			$: $$invalidate(6, isTeamGame = lobbyState?.gameMode !== '1v1');
+		}
+	};
+
+	return [
+		playerNumber,
+		username,
+		isHost,
+		lobbyState,
+		myTeam,
+		errorMsg,
+		isTeamGame,
+		canSwitchTeam,
+		switchTeam,
+		updateOption,
+		startGame,
+		getTeamPlayers,
+		canStart,
+		isTeamFull,
+		gameTypes,
+		getGameTypeLabel,
+		otherTeam,
+		change_handler,
+		change_handler_1,
+		change_handler_2,
+		change_handler_3
+	];
+}
+
+class Lobby extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
+	constructor(options) {
+		super();
+		(0,svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, { playerNumber: 0, username: 1, isHost: 2 }, add_css, [-1, -1]);
+	}
+}
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Lobby);
 
 /***/ }),
 

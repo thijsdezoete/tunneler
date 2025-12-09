@@ -1,19 +1,33 @@
 <script>
   import connectionHandler from '../ConnectionHandler';
   import ChooseType from './JoinOrCreate.svelte';
-  import GetGameCode from './CreateNewGame.svelte';
+  import Lobby from './Lobby.svelte';
   import Game from './Game.svelte';
   import { setContext } from 'svelte';
 
   let gameInitData = {};
+  let playerInfo = {
+    playerNumber: null,
+    username: '',
+    isHost: false
+  };
 
   connectionHandler.socket.on(
     'joined',
-    ({ playerNumber }) => (gameInitData.playerNumber = playerNumber)
+    ({ playerNumber, team, username, isHost }) => {
+      playerInfo.playerNumber = playerNumber;
+      playerInfo.username = username;
+      playerInfo.isHost = isHost;
+      gameInitData.playerNumber = playerNumber;
+      gameInitData.team = team;
+      // Route to lobby when successfully joined
+      route = 'lobby';
+    }
   );
+
   connectionHandler.socket.on('gameInitialization', (data) => {
     gameInitData = { ...gameInitData, ...data };
-    console.log(gameInitData);
+    console.log('Game initialized:', gameInitData);
     route = 'game';
   });
 
@@ -22,15 +36,17 @@
   });
 
   let route = 'home';
-
-  const changeRoute = (value) => (route = value);
 </script>
 
 <div id="content">
   {#if route === 'home'}
-    <ChooseType {changeRoute} />
-  {:else if route === 'create'}
-    <GetGameCode {changeRoute} />
+    <ChooseType />
+  {:else if route === 'lobby'}
+    <Lobby
+      playerNumber={playerInfo.playerNumber}
+      username={playerInfo.username}
+      isHost={playerInfo.isHost}
+    />
   {:else if route === 'game'}
     <Game {gameInitData} />
   {/if}
