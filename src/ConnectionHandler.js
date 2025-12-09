@@ -1,16 +1,15 @@
 const { io } = require('socket.io-client');
 const equal = require('fast-deep-equal');
 
-// Determine socket URL - will be replaced at build time by webpack DefinePlugin
-// Falls back to deriving from current origin (replace port with 3100)
+// Determine socket URL from runtime config or fallback to localhost
 const getSocketUrl = () => {
-  // Check if SOCKET_URL was injected at build time
-  if (typeof __SOCKET_URL__ !== 'undefined' && __SOCKET_URL__) {
-    return __SOCKET_URL__;
+  // Runtime config from /config.js (injected at container startup from ENV)
+  if (typeof window !== 'undefined' && window.SOCKET_URL) {
+    return window.SOCKET_URL;
   }
-  // Fallback: derive from current page URL
+
+  // Fallback for local development: same origin with port 3100
   const origin = window.location.origin;
-  // If on port 80 or 443, append :3100, otherwise replace port
   if (origin.match(/:\d+$/)) {
     return origin.replace(/:\d+$/, ':3100');
   }
