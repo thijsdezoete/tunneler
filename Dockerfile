@@ -5,16 +5,16 @@ WORKDIR /app
 # Socket URL for the server (passed at build time)
 ARG SOCKET_URL
 ENV SOCKET_URL=${SOCKET_URL}
-ENV NODE_ENV=production
 
 COPY package*.json ./
 
+# Install all dependencies (including devDependencies for build)
 RUN npm ci
 
 COPY . .
 
 # Build the client with the socket URL
-RUN npm run build
+RUN npm run build-production
 
 # Production stage - serve static files with nginx
 FROM nginx:alpine
