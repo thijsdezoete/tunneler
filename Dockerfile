@@ -19,6 +19,9 @@ RUN echo "SOCKET_URL is: $SOCKET_URL" && npm run build-production && echo "=== B
 # Production stage - serve static files with nginx
 FROM nginx:alpine
 
+# Cache bust - change this value to force rebuild
+ARG CACHE_BUST=1
+
 # Copy built files to nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 

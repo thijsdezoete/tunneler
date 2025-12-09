@@ -1,11 +1,14 @@
 const { io } = require('socket.io-client');
 const equal = require('fast-deep-equal');
 
-// Determine socket URL from build-time config or fallback to localhost
+// Socket URL - injected at build time by webpack DefinePlugin, or fallback for local dev
 const getSocketUrl = () => {
-  // Build-time config from webpack DefinePlugin
-  if (typeof __SOCKET_URL__ !== 'undefined' && __SOCKET_URL__) {
-    return __SOCKET_URL__;
+  // __SOCKET_URL__ is replaced by webpack at build time
+  const buildTimeUrl = __SOCKET_URL__;
+  console.log('Build-time SOCKET_URL:', buildTimeUrl);
+
+  if (buildTimeUrl) {
+    return buildTimeUrl;
   }
 
   // Fallback for local development: same origin with port 3100
