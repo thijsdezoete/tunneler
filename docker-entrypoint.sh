@@ -1,9 +1,12 @@
 #!/bin/sh
 
-# Generate runtime config from environment variables
-cat > /usr/share/nginx/html/config.js << EOF
-window.SOCKET_URL = "${SOCKET_URL}";
-EOF
+echo "=== Container starting ==="
+echo "Files in /usr/share/nginx/html:"
+ls -la /usr/share/nginx/html/
+echo ""
+echo "Checking for SOCKET_URL in bundle:"
+grep -o 'tunnelerserver[^"]*' /usr/share/nginx/html/bundle*.js || echo "NOT FOUND"
+echo "==========================="
 
 # Start nginx
 exec nginx -g 'daemon off;'

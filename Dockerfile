@@ -14,7 +14,7 @@ RUN npm ci
 COPY . .
 
 # Build the client with the socket URL
-RUN echo "SOCKET_URL is: $SOCKET_URL" && npm run build-production
+RUN echo "SOCKET_URL is: $SOCKET_URL" && npm run build-production && echo "=== Built files ===" && ls -la dist/ && echo "=== Checking bundle for SOCKET_URL ===" && grep -o 'https://tunnelerserver[^"]*' dist/bundle*.js || echo "NOT FOUND IN BUNDLE"
 
 # Production stage - serve static files with nginx
 FROM nginx:alpine
@@ -25,6 +25,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx config for SPA
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint.sh"]
