@@ -27,15 +27,10 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html',
-      templateParameters: {
-        configScript: '<script src="config.js"></script>',
-      },
     }),
     new MiniCssExtractPlugin(),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: 'public/config.js', to: 'config.js' },
-      ],
+    new webpack.DefinePlugin({
+      '__SOCKET_URL__': JSON.stringify(process.env.SOCKET_URL || ''),
     }),
   ],
   module: {
