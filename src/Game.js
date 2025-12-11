@@ -149,6 +149,11 @@ export default class Game {
       this.teamScores[team] = score;
     });
 
+    // Listen for nextRound from other clients (when they trigger a round end)
+    connectionHandler.socket.on('nextRound', (data) => {
+      this.handleRemoteNextRound(data);
+    });
+
     // Set up minimap with team info
     this.renderer.teammates = this.teammates;
     this.renderer.playerTeam = this.playerTeam;
@@ -240,7 +245,21 @@ export default class Game {
   }
 
   async endRound(message = null) {
-    connectionHandler.nextRound();
+    this.isRoundSwitching = true;
+    connectionHandler.nextRound({ message });
+    await this.performRoundReset(message);
+  }
+
+  // Handle nextRound event from another client (e.g., when they capture the flag)
+  async handleRemoteNextRound(data = {}) {
+    // Only process if we're not already switching rounds
+    if (this.isRoundSwitching) return;
+    await this.performRoundReset(data.message);
+  }
+
+  // Shared logic for resetting the round (used by both local and remote triggers)
+  async performRoundReset(message = null) {
+    this.isRoundSwitching = true;
     // Reset all tanks
     this.allTanks.forEach(tank => tank.reset());
 

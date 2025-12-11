@@ -32,8 +32,8 @@ class ConnectionHandler {
     this.socket.emit('createGame', { gameMode, options });
   }
 
-  nextRound() {
-    this.socket.emit('nextRound')
+  nextRound(data = {}) {
+    this.socket.emit('nextRound', data);
   }
 
   updateGameState(state) {
