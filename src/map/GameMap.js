@@ -486,28 +486,36 @@ export default class GameMap {
         // check if the projectile is colliding with anything except the owner tank
         if (activeBlockers.includes(tile)) {
           // Check all tanks for collision
-          // Only the local player's tank (index 0) receives hits locally
+          // Only the local player's tank receives hits locally
           // Network tanks get their hit state from network updates
           for (let j = 0; j < this.tanks.length; j++) {
             const tank = this.tanks[j];
+            // Must check BOTH color match AND position to avoid teammates sharing damage
+            // (teammates have same colors, so color alone is not sufficient)
             if (tank.projectileBlockers.includes(tile)) {
-              // Only apply damage to local player tank (isPlayer=true)
-              // Other tanks receive damage via network sync
-              if (tank.isPlayer) {
-                // Check friendly fire option
-                const projectileOwnerTeam = this.getTeamForPlayer(projectile.playerNumber);
-                const tankTeam = this.getTeamForPlayer(tank.playerNumber);
+              // Verify the collision is actually within this tank's bounds
+              const withinTankX = coords.x >= tank.x && coords.x < tank.x + tank.width;
+              const withinTankY = coords.y >= tank.y && coords.y < tank.y + tank.height;
 
-                // If friendly fire is off and same team, don't damage
-                if (!this.friendlyFire && projectileOwnerTeam === tankTeam) {
-                  // Skip damage but still show explosion
-                } else {
-                  tank.receiveHit();
+              if (withinTankX && withinTankY) {
+                // Only apply damage to local player tank (isPlayer=true)
+                // Other tanks receive damage via network sync
+                if (tank.isPlayer) {
+                  // Check friendly fire option
+                  const projectileOwnerTeam = this.getTeamForPlayer(projectile.playerNumber);
+                  const tankTeam = this.getTeamForPlayer(tank.playerNumber);
+
+                  // If friendly fire is off and same team, don't damage
+                  if (!this.friendlyFire && projectileOwnerTeam === tankTeam) {
+                    // Skip damage but still show explosion
+                  } else {
+                    tank.receiveHit();
+                  }
                 }
+                explosionLifeSpan = 7;
+                explosionParticleNumber = 14;
+                break;
               }
-              explosionLifeSpan = 7;
-              explosionParticleNumber = 14;
-              break;
             }
           }
 
