@@ -3,7 +3,7 @@
   const { connectionHandler } = getContext('connectionHandler');
 
   let gameCode;
-  let selectedMode = '1v1';
+  let selectedMode = 'teams';
   let openGames = [];
 
   // Game options
@@ -12,16 +12,17 @@
   let friendlyFire = true;
   let gameType = 'elimination';
 
+  // Simplified game modes
   const gameModes = [
-    { value: '1v1', label: '1v1 (Classic)' },
-    { value: '2v2', label: '2v2 (Team)' },
-    { value: '3v3', label: '3v3 (Team)' }
+    { value: '1v1', label: '1v1', description: 'Classic head-to-head' },
+    { value: 'teams', label: 'Teams', description: '2-6 players, auto-balanced' },
+    { value: 'ffa', label: 'Free-for-All', description: '2-6 players, everyone for themselves' },
   ];
 
   const gameTypes = [
-    { value: 'elimination', label: 'Last Man Standing', description: 'Eliminate the entire enemy team' },
-    { value: 'capture', label: 'Capture the Flag', description: 'Enter the enemy base to score' },
-    { value: 'deathmatch', label: 'Deathmatch', description: 'First team to X kills wins' },
+    { value: 'elimination', label: 'Last Man Standing' },
+    { value: 'capture', label: 'Capture the Flag' },
+    { value: 'deathmatch', label: 'Deathmatch' },
   ];
 
   function createGame() {
@@ -32,11 +33,9 @@
       gameType
     };
     connectionHandler.socket.emit('createGame', { gameMode: selectedMode, options });
-    // Route to lobby happens automatically when 'joined' event is received
   }
 
   function handleInput() {
-    // Only emit if we have a valid-looking code (5 chars)
     if (gameCode && gameCode.length >= 5) {
       connectionHandler.socket.emit('gameCodeInput', gameCode);
     }
@@ -55,18 +54,43 @@
       openGames = games;
     });
     refreshGames();
-    // Refresh every 3 seconds
     const interval = setInterval(refreshGames, 3000);
     return () => clearInterval(interval);
   });
 
-  $: isTeamGame = selectedMode !== '1v1';
+  $: isTeamGame = selectedMode === 'teams';
+  $: isFFA = selectedMode === 'ffa';
+  $: is1v1 = selectedMode === '1v1';
+
+  // Available game types (FFA doesn't support capture, 1v1 is always elimination)
+  $: availableGameTypes = isFFA
+    ? gameTypes.filter(t => t.value !== 'capture')
+    : gameTypes;
+
+  // Reset game type if capture was selected and user switches to FFA
+  $: if (isFFA && gameType === 'capture') {
+    gameType = 'elimination';
+  }
+
+  // 1v1 forces elimination
+  $: if (is1v1) {
+    gameType = 'elimination';
+  }
 
   // Reset maxPoints to sensible defaults when game type changes
   $: if (gameType === 'capture' && maxPoints > 5) {
     maxPoints = 3;
   } else if (gameType !== 'capture' && maxPoints < 3) {
     maxPoints = 5;
+  }
+
+  function getModeLabel(mode) {
+    if (mode === '1v1') return '1v1';
+    if (mode === 'teams') return 'Teams';
+    if (mode === 'ffa') return 'FFA';
+    // Legacy modes
+    if (mode.startsWith('ffa')) return 'FFA';
+    return mode.toUpperCase();
   }
 </script>
 
@@ -75,12 +99,24 @@
 
   {#if openGames.length > 0}
     <div class="open-games">
-      <h2>Open Games</h2>
+      <h2>Available Games</h2>
       <div class="games-list">
         {#each openGames as game}
-          <button class="game-item" on:click={() => joinGame(game.code)}>
-            <span class="game-mode">{game.gameMode}</span>
-            <span class="game-players">{game.currentPlayers}/{game.totalPlayers} players</span>
+          <button class="game-item" class:playing={game.status === 'playing'} on:click={() => joinGame(game.code)}>
+            <span class="game-mode">{getModeLabel(game.gameMode)}</span>
+            <span class="game-players">
+              {#if game.status === 'playing'}
+                {game.currentPlayers} playing
+                {#if game.spectatorCount > 0}
+                  + {game.spectatorCount} watching
+                {/if}
+              {:else}
+                {game.currentPlayers}/{game.maxPlayers} players
+              {/if}
+            </span>
+            <span class="game-status" class:live={game.status === 'playing'}>
+              {game.status === 'playing' ? 'LIVE' : 'LOBBY'}
+            </span>
             <span class="game-code">{game.code}</span>
           </button>
         {/each}
@@ -95,58 +131,64 @@
   <div class="create-section">
     <h2>Create a new game</h2>
 
-    <div class="mode-selector">
-      <label for="gamemode">Game Mode:</label>
-      <select id="gamemode" bind:value={selectedMode}>
-        {#each gameModes as mode}
-          <option value={mode.value}>{mode.label}</option>
-        {/each}
-      </select>
+    <div class="mode-buttons">
+      {#each gameModes as mode}
+        <button
+          class="mode-btn"
+          class:selected={selectedMode === mode.value}
+          on:click={() => selectedMode = mode.value}
+        >
+          <span class="mode-label">{mode.label}</span>
+          <span class="mode-desc">{mode.description}</span>
+        </button>
+      {/each}
     </div>
 
-    <div class="options-row">
-      <label for="gameType">Game Type:</label>
-      <select id="gameType" bind:value={gameType}>
-        {#each gameTypes as type}
-          <option value={type.value}>{type.label}</option>
-        {/each}
-      </select>
-    </div>
+    {#if !is1v1}
+      <div class="options-row">
+        <label for="gameType">Game Type:</label>
+        <select id="gameType" bind:value={gameType}>
+          {#each availableGameTypes as type}
+            <option value={type.value}>{type.label}</option>
+          {/each}
+        </select>
+      </div>
 
-    <div class="options-row">
-      <label for="maxPoints">{gameType === 'capture' ? 'Captures to Win:' : 'Points to Win:'}</label>
-      <select id="maxPoints" bind:value={maxPoints}>
-        {#if gameType === 'capture'}
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={5}>5</option>
-        {:else}
-          <option value={3}>3</option>
-          <option value={5}>5</option>
-          <option value={7}>7</option>
-          <option value={10}>10</option>
-        {/if}
-      </select>
-    </div>
+      <div class="options-row">
+        <label for="maxPoints">{gameType === 'capture' ? 'Captures to Win:' : 'Points to Win:'}</label>
+        <select id="maxPoints" bind:value={maxPoints}>
+          {#if gameType === 'capture'}
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={5}>5</option>
+          {:else}
+            <option value={3}>3</option>
+            <option value={5}>5</option>
+            <option value={7}>7</option>
+            <option value={10}>10</option>
+          {/if}
+        </select>
+      </div>
 
-    {#if isTeamGame}
       <div class="options-row">
         <label>
           <input type="checkbox" bind:checked={minimap} />
-          Enable Minimap
+          Minimap
         </label>
       </div>
 
-      <div class="options-row">
-        <label>
-          <input type="checkbox" bind:checked={friendlyFire} />
-          Friendly Fire
-        </label>
-      </div>
+      {#if isTeamGame}
+        <div class="options-row">
+          <label>
+            <input type="checkbox" bind:checked={friendlyFire} />
+            Friendly Fire
+          </label>
+        </div>
+      {/if}
     {/if}
 
-    <button on:click={createGame}>Create Game</button>
+    <button class="create-btn" on:click={createGame}>Create Game</button>
   </div>
 </div>
 
@@ -185,7 +227,7 @@
     align-items: center;
     gap: 0.75rem;
     width: 100%;
-    max-width: 300px;
+    max-width: 350px;
   }
 
   .create-section h2 {
@@ -193,7 +235,46 @@
     font-size: 1.2rem;
   }
 
-  .mode-selector,
+  .mode-buttons {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .mode-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem 0.4rem;
+    background-color: #3a5a8a;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.15s ease;
+  }
+
+  .mode-btn:hover {
+    background-color: #4a6a9a;
+  }
+
+  .mode-btn.selected {
+    background-color: #4a8a4a;
+    border-color: #6aba6a;
+  }
+
+  .mode-label {
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  .mode-desc {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    text-align: center;
+  }
+
   .options-row {
     display: flex;
     align-items: center;
@@ -209,7 +290,7 @@
   }
 
   select {
-    font-size: 1.1rem;
+    font-size: 1rem;
     padding: 0.3rem 0.5rem;
   }
 
@@ -259,17 +340,45 @@
     border-radius: 3px;
   }
 
-  button {
-    padding: 0.6rem 1.2rem;
+  .game-status {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    background-color: #666;
+    color: #fff;
+  }
+
+  .game-status.live {
+    background-color: #c44;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .game-item.playing {
+    background-color: #6a5a85;
+    border-left: 3px solid #c44;
+  }
+
+  .game-item.playing:hover {
+    background-color: #7a6a95;
+  }
+
+  .create-btn {
+    padding: 0.7rem 1.5rem;
     font-size: 1.1rem;
     cursor: pointer;
     background-color: #4aaa4a;
     border: none;
     color: white;
     border-radius: 4px;
+    margin-top: 0.5rem;
   }
 
-  button:hover {
+  .create-btn:hover {
     background-color: #5abb5a;
   }
 </style>

@@ -56,6 +56,11 @@ class ConnectionHandler {
   emitScoreUpdate(team, score) {
     this.socket.emit('scoreUpdate', { team, score });
   }
+
+  // FFA mode: emit individual player score updates
+  emitPlayerScoreUpdate(playerNumber, playerScore) {
+    this.socket.emit('scoreUpdate', { playerNumber, playerScore });
+  }
 }
 
 const connectionHandler = new ConnectionHandler();

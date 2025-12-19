@@ -15,11 +15,22 @@ import Explosion from '../player/Explosion';
 // 11 === projectile dark
 // 12 === blue base
 // 13 === green base
+// FFA additional colors (14-29):
+// 14-16 === orange tank (tracks, body, barrel)
+// 17-19 === purple tank
+// 20-22 === cyan tank
+// 23-25 === pink tank
+// 26-29 === bases for orange, purple, cyan, pink
 
-export const IMPENETRABLES = [0, 4, 5, 6, 7, 8, 9, 12, 13];
+// All tank tiles (for collision detection)
+const ALL_TANK_TILES = [4, 5, 6, 7, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+// All base tiles
+const ALL_BASE_TILES = [12, 13, 26, 27, 28, 29];
+
+export const IMPENETRABLES = [0, ...ALL_TANK_TILES, ...ALL_BASE_TILES];
 export const PROJECTILE_BLOCKERS = [...IMPENETRABLES, 1, 2];
-export const PROJECTILE_BLOCKERS_EXCEPT_TANKS = [0, 1, 2, 12, 13];
-export const IMPENETRABLES_EXCEPT_TANKS = [0, 12, 13];
+export const PROJECTILE_BLOCKERS_EXCEPT_TANKS = [0, 1, 2, ...ALL_BASE_TILES];
+export const IMPENETRABLES_EXCEPT_TANKS = [0, ...ALL_BASE_TILES];
 
 export default class GameMap {
   constructor(width = 1200, height = 600, seed = 1) {
@@ -49,18 +60,17 @@ export default class GameMap {
     this.activeExplosions = new Map();
     this.bases = [];
 
-    // Fog of war - track explored tiles per team
-    // Only tracks what each team has seen (by their tanks moving nearby)
-    this.exploredByTeam = {
-      0: new Set(), // Blue team explored tiles
-      1: new Set()  // Green team explored tiles
-    };
+    // Fog of war - track explored tiles per team/player
+    // For team games: tracks what each team has seen
+    // For FFA: tracks what each player has seen (team = player number)
+    this.exploredByTeam = {};
 
     // Game options - will be set by Game.js
     this.friendlyFire = true; // Default to true
     this.playerTeam = 0;
     this.teams = { 0: [0], 1: [1] };
     this.localPlayerNumber = 0; // Will be set by Game.js
+    this.isFFA = false; // Will be set by Game.js
 
     // Track tiles cleared this frame to broadcast to other clients
     this.clearedTilesThisFrame = [];
@@ -102,8 +112,16 @@ export default class GameMap {
   }
 
   getTeamForPlayer(playerNumber) {
-    if (this.teams[0].includes(playerNumber)) return 0;
-    if (this.teams[1].includes(playerNumber)) return 1;
+    // Ensure playerNumber is a number for comparison
+    const pNum = typeof playerNumber === 'string' ? parseInt(playerNumber) : playerNumber;
+
+    // In FFA, each player is their own "team" (team number = player number)
+    if (this.isFFA) {
+      return pNum;
+    }
+    // Team games: look up team membership
+    if (this.teams[0] && this.teams[0].includes(pNum)) return 0;
+    if (this.teams[1] && this.teams[1].includes(pNum)) return 1;
     return 0; // Default
   }
 
@@ -168,11 +186,17 @@ export default class GameMap {
   }
 
   isExploredByTeam(x, y, team) {
+    if (!this.exploredByTeam[team]) {
+      this.exploredByTeam[team] = new Set();
+    }
     return this.exploredByTeam[team].has(`${x},${y}`);
   }
 
   // Mark area around position as explored for a specific team
   markAreaExploredByTeam(centerX, centerY, team, radius = 10) {
+    if (!this.exploredByTeam[team]) {
+      this.exploredByTeam[team] = new Set();
+    }
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
         const x = centerX + dx;
@@ -187,9 +211,11 @@ export default class GameMap {
   clearMapBeforeRender() {
     // could be optimized by not iterating the whole map if needed
     this.tiles = this.tiles.map((x) => {
-      if (x >= 4 && x <= 9) {
+      // Clear all tank tiles (blue, green, and FFA colors)
+      if ((x >= 4 && x <= 9) || (x >= 14 && x <= 25)) {
         return 3;
       }
+      // Clear projectile tiles
       if (x === 10 || x === 11) {
         return 3;
       }
@@ -234,6 +260,9 @@ export default class GameMap {
     this.tanks.forEach((tank) => {
       if (tank.isRenderedDead) return;
 
+      // Only track exploration for local player's tank
+      const isLocalPlayer = tank.playerNumber === this.localPlayerNumber;
+
       for (let x = 0; x < tank.width; x++) {
         for (let y = 0; y < tank.height; y++) {
           let tankTile = tank.getTile(x, y);
@@ -241,10 +270,19 @@ export default class GameMap {
             if (tank.isDead) {
               tankTile = 3;
             }
-            //console.log('tank tile:', tankTile, 'at xy', x + tank.x, y+tank.y);
+
+            // Track when local player's tank drives over dirt (exploration)
+            if (isLocalPlayer) {
+              const mapX = x + tank.x;
+              const mapY = y + tank.y;
+              const currentTile = this.getTile(mapX, mapY);
+              if (currentTile === 1 || currentTile === 2) {
+                // This dirt tile will be cleared when tank moves away
+                this.clearedTilesThisFrame.push({ x: mapX, y: mapY });
+              }
+            }
+
             this.setTile(x + tank.x, y + tank.y, tankTile);
-          } else {
-            //this.setTile(x + tank.x, y + tank.y, 3);
           }
         }
       }

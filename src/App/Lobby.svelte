@@ -66,23 +66,40 @@
 
   $: myTeam = lobbyState?.players[playerNumber]?.team;
   $: otherTeam = myTeam === 0 ? 1 : 0;
-  $: isTeamGame = lobbyState?.gameMode !== '1v1';
+  $: isFFA = lobbyState?.isFFA || false;
+  $: isTeamGame = lobbyState?.gameMode !== '1v1' && !isFFA;
   $: showGameTypeOptions = true; // Game type available for all modes including 1v1
 
-  $: blueTeamFull = lobbyState ? blueTeamPlayers.length >= lobbyState.playersPerTeam : true;
-  $: greenTeamFull = lobbyState ? greenTeamPlayers.length >= lobbyState.playersPerTeam : true;
-  $: canSwitchTeam = myTeam === 0 ? !greenTeamFull : !blueTeamFull;
+  // In dynamic teams, allow switching if it won't create imbalance
+  $: canSwitchTeam = (() => {
+    if (!lobbyState || isFFA) return false;
+    const myTeamSize = myTeam === 0 ? blueTeamPlayers.length : greenTeamPlayers.length;
+    const otherTeamSize = myTeam === 0 ? greenTeamPlayers.length : blueTeamPlayers.length;
+    return otherTeamSize < myTeamSize; // Can only switch to smaller team
+  })();
 
-  $: canStartGame = blueTeamPlayers.length >= 1 && greenTeamPlayers.length >= 1;
+  // FFA: All players in a flat list
+  $: ffaPlayers = lobbyState ? Object.values(lobbyState.players).sort((a, b) => a.playerNumber - b.playerNumber) : [];
 
-  $: blueEmptySlots = lobbyState?.playersPerTeam ? Math.max(0, lobbyState.playersPerTeam - blueTeamPlayers.length) : 0;
-  $: greenEmptySlots = lobbyState?.playersPerTeam ? Math.max(0, lobbyState.playersPerTeam - greenTeamPlayers.length) : 0;
+  // Can start game based on min players
+  $: canStartGame = lobbyState
+    ? lobbyState.currentPlayers >= lobbyState.minPlayers &&
+      (isFFA || (blueTeamPlayers.length >= 1 && greenTeamPlayers.length >= 1))
+    : false;
+
+  // FFA player colors for display
+  const FFA_COLORS = ['#4a8aff', '#4aff4a', '#ff8c00', '#aa44ff', '#44dddd', '#ff44aa'];
 
   const gameTypes = [
     { value: 'elimination', label: 'Last Man Standing', description: 'Eliminate the entire enemy team' },
     { value: 'capture', label: 'Capture the Flag', description: 'Enter the enemy base to score' },
     { value: 'deathmatch', label: 'Deathmatch', description: 'First team to X kills wins' },
   ];
+
+  // Available game types (FFA doesn't support capture)
+  $: availableGameTypes = isFFA
+    ? gameTypes.filter(t => t.value !== 'capture')
+    : gameTypes;
 
   function getGameTypeLabel(type) {
     const found = gameTypes.find(t => t.value === type);
@@ -97,14 +114,25 @@
       <span class="label">Code:</span>
       <span class="code">{lobbyState?.code || '...'}</span>
     </div>
-    <div class="game-mode">{lobbyState?.gameMode || '...'}</div>
+    <div class="game-mode">
+      {#if lobbyState?.gameMode === '1v1'}
+        1v1 Classic
+      {:else if lobbyState?.gameMode === 'teams'}
+        Team Battle
+      {:else if lobbyState?.gameMode === 'ffa'}
+        Free-for-All
+      {:else}
+        {lobbyState?.gameMode || '...'}
+      {/if}
+      ({lobbyState?.currentPlayers || 0}/{lobbyState?.maxPlayers || '?'} players)
+    </div>
   </div>
 
   {#if errorMsg}
     <div class="error">{errorMsg}</div>
   {/if}
 
-  <div class="your-info" class:team-blue-bg={myTeam === 0} class:team-green-bg={myTeam === 1}>
+  <div class="your-info" class:team-blue-bg={!isFFA && myTeam === 0} class:team-green-bg={!isFFA && myTeam === 1}>
     {#if editingUsername}
       <input
         type="text"
@@ -119,14 +147,37 @@
       <span class="your-name">{username}</span>
       <button class="edit-btn" on:click={startEditUsername}>Edit</button>
     {/if}
-    <span class="your-team">
-      {#if myTeam === 0}Blue Team{:else if myTeam === 1}Green Team{:else}...{/if}
-    </span>
+    {#if !isFFA}
+      <span class="your-team">
+        {#if myTeam === 0}Blue Team{:else if myTeam === 1}Green Team{:else}...{/if}
+      </span>
+    {/if}
   </div>
 
-  <div class="teams-container">
+  {#if isFFA}
+    <!-- FFA Player List -->
+    <div class="ffa-players">
+      <h2>Players ({ffaPlayers.length}/{lobbyState?.maxPlayers || '?'})</h2>
+      <div class="ffa-player-grid">
+        {#each ffaPlayers as player, index}
+          <div class="ffa-player-slot" class:is-you={player.playerNumber === playerNumber}>
+            <span class="ffa-color-indicator" style="background-color: {FFA_COLORS[index % FFA_COLORS.length]}"></span>
+            <span class="player-name">{player.username}</span>
+            {#if player.isHost}
+              <span class="host-badge">HOST</span>
+            {/if}
+            {#if player.playerNumber === playerNumber}
+              <span class="you-badge">YOU</span>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
+  {:else}
+    <!-- Team Player Lists -->
+    <div class="teams-container">
     <div class="team team-blue">
-      <h2>Blue Team ({blueTeamPlayers.length}/{lobbyState?.playersPerTeam || '?'})</h2>
+      <h2>Blue Team ({blueTeamPlayers.length})</h2>
       <div class="team-slots">
         {#each blueTeamPlayers as player}
           <div class="player-slot" class:is-you={player.playerNumber === playerNumber}>
@@ -136,13 +187,13 @@
             {/if}
           </div>
         {/each}
-        {#each Array(blueEmptySlots) as _}
+        {#if blueTeamPlayers.length === 0}
           <div class="player-slot empty">
-            <span class="waiting">Waiting...</span>
+            <span class="waiting">Empty</span>
           </div>
-        {/each}
+        {/if}
       </div>
-      {#if myTeam !== 0 && !blueTeamFull}
+      {#if myTeam !== 0 && canSwitchTeam}
         <button class="join-team-btn" on:click={switchTeam}>Join Blue</button>
       {/if}
     </div>
@@ -150,7 +201,7 @@
     <div class="vs">VS</div>
 
     <div class="team team-green">
-      <h2>Green Team ({greenTeamPlayers.length}/{lobbyState?.playersPerTeam || '?'})</h2>
+      <h2>Green Team ({greenTeamPlayers.length})</h2>
       <div class="team-slots">
         {#each greenTeamPlayers as player}
           <div class="player-slot" class:is-you={player.playerNumber === playerNumber}>
@@ -160,17 +211,18 @@
             {/if}
           </div>
         {/each}
-        {#each Array(greenEmptySlots) as _}
+        {#if greenTeamPlayers.length === 0}
           <div class="player-slot empty">
-            <span class="waiting">Waiting...</span>
+            <span class="waiting">Empty</span>
           </div>
-        {/each}
+        {/if}
       </div>
-      {#if myTeam !== 1 && !greenTeamFull}
+      {#if myTeam !== 1 && canSwitchTeam}
         <button class="join-team-btn" on:click={switchTeam}>Join Green</button>
       {/if}
     </div>
   </div>
+  {/if}
 
   <div class="game-options">
     <h3>Game Settings</h3>
@@ -179,7 +231,7 @@
       <label for="gameType">Game Type:</label>
       {#if isHost}
         <select id="gameType" value={lobbyState?.options?.gameType || 'elimination'} on:change={(e) => updateOption('gameType', e.target.value)}>
-          {#each gameTypes as type}
+          {#each availableGameTypes as type}
             <option value={type.value}>{type.label}</option>
           {/each}
         </select>
@@ -209,7 +261,7 @@
       {/if}
     </div>
 
-    {#if isTeamGame}
+    {#if isTeamGame || isFFA}
       <div class="option">
         <label for="minimap">Minimap:</label>
         {#if isHost}
@@ -218,7 +270,9 @@
           <span class="option-value">{lobbyState?.options?.minimap !== false ? 'On' : 'Off'}</span>
         {/if}
       </div>
+    {/if}
 
+    {#if isTeamGame}
       <div class="option">
         <label for="friendlyFire">Friendly Fire:</label>
         {#if isHost}
@@ -234,6 +288,8 @@
     <button class="start-btn" disabled={!canStartGame} on:click={startGame}>
       {#if canStartGame}
         Start Game
+      {:else if isFFA}
+        Need at least 3 players
       {:else}
         Need players on both teams
       {/if}
@@ -450,6 +506,56 @@
     border-radius: 3px;
     font-size: 0.7rem;
     font-weight: bold;
+  }
+
+  .you-badge {
+    background-color: #44aaff;
+    color: #000;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+  }
+
+  /* FFA Player List Styles */
+  .ffa-players {
+    background-color: #3a4a6a;
+    padding: 1rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .ffa-players h2 {
+    margin: 0 0 0.75rem 0;
+    text-align: center;
+    color: #aaffaa;
+  }
+
+  .ffa-player-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ffa-player-slot {
+    background-color: #00000033;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ffa-player-slot.is-you {
+    border: 2px solid #ffaa00;
+  }
+
+  .ffa-color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
   }
 
   .join-team-btn {

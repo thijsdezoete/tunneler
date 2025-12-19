@@ -13,7 +13,8 @@
       gameInitData.playerNumber,
       gameInitData.gameMode || '1v1',
       gameInitData.teams || { 0: [0], 1: [1] },
-      gameInitData.options || {}
+      gameInitData.options || {},
+      gameInitData.isFFA || false
     );
   }
 

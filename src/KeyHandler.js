@@ -17,6 +17,11 @@ export default class KeyHandler {
 
   attachListener(event, bool) {
     document.addEventListener(event, (e) => {
+      // Ignore input when typing in chat or other input elements
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+
       const key = e.key;
 
       if (key === 'ArrowUp') {

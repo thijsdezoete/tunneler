@@ -155,6 +155,7 @@ export default class Tank {
       sn: this.shotNumber,
       e: this.energy,
       s: this.shield,
+      dead: this.isDead,
     };
     /*     const state = {
       x: this.x,
@@ -169,14 +170,26 @@ export default class Tank {
   dumpState() {
     if (this.serverState) {
       //console.log('dumping state', this.serverState)
-      const { x, y, dir, sn, e, s, ...keystate } = this.serverState;
+      const { x, y, dir, sn, e, s, dead, ...keystate } = this.serverState;
       this.keyState = keystate;
       this.x = x;
       this.y = y;
       this.shotNumber = sn;
       this.direction = dir;
       this.energy = (e === null) ? 100 : e;
-      this.shield = (s === null) ? 100 : s; 
+      this.shield = (s === null) ? 100 : s;
+      // Handle dead/respawn state
+      if (dead !== undefined) {
+        if (dead && !this.isDead) {
+          this.die();
+        } else if (!dead && this.isDead) {
+          // Player respawned - reset death-related flags
+          this.isDead = false;
+          this.isExploded = false;
+          this.isRenderedDead = false;
+          this.deathCounted = false;
+        }
+      }
       this.currentTankShape = this.getTankShape(dir);
       this.setVectorByDir(dir);
       //console.log('dumped keystate', this.keyState);
